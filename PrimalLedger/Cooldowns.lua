@@ -14,10 +14,13 @@ PL.COOLDOWNS = {
 
     -- Alchemy cooldowns
     [29688] = { name = "Transmute: Primal Might", type = "primalMight", duration = 72000 },           -- 20 hours
-    [17187] = { name = "Transmute: Arcanite", type = "transmuteArcanite", duration = 172800 },        -- 48 hours
-    [17561] = { name = "Transmute: Undeath to Water", type = "transmuteUndeathToWater", duration = 86400 }, -- 24 hours
-    [11480] = { name = "Transmute: Mithril to Truesilver", type = "transmuteMithrilToTruesilver", duration = 72000 }, -- 20 hours
-    [11479] = { name = "Transmute: Iron to Gold", type = "transmuteIronToGold", duration = 72000 }, -- 20 hours
+    [28582] = { name = "Transmute: Primal Mana to Fire", type = "transmutePrimalManaToFire", duration = 72000 }, -- 20 hours
+    [28580] = { name = "Transmute: Primal Shadow to Water", type = "transmutePrimalShadowToWater", duration = 72000 }, -- 20 hours
+    [28566] = { name = "Transmute: Primal Air to Fire", type = "transmutePrimalAirToFire", duration = 72000 }, -- 20 hours
+    [28581] = { name = "Transmute: Primal Water to Shadow", type = "transmutePrimalWaterToShadow", duration = 72000 }, -- 20 hours
+    [28567] = { name = "Transmute: Primal Earth to Water", type = "transmutePrimalEarthToWater", duration = 72000 }, -- 20 hours
+    [32765] = { name = "Transmute: Earthstorm Diamond", type = "transmuteEarthstormDiamond", duration = 72000 }, -- 20 hours
+    [32766] = { name = "Transmute: Skyfire Diamond", type = "transmuteSkyfireDiamond", duration = 72000 }, -- 20 hours
 }
 
 -- Profession names for detection
@@ -48,7 +51,7 @@ end
 -- Cooldown types by profession
 PL.PROFESSION_COOLDOWNS = {
     tailoring = { "shadowcloth", "primalMooncloth", "spellcloth", "mooncloth" },
-    alchemy = { "primalMight", "transmuteArcanite", "transmuteUndeathToWater", "transmuteMithrilToTruesilver", "transmuteIronToGold" }
+    alchemy = { "primalMight", "transmuteArcanite", "transmuteUndeathToWater", "transmuteMithrilToTruesilver", "transmuteIronToGold", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
 }
 
 -- Friendly names for cooldown types
@@ -61,7 +64,14 @@ PL.COOLDOWN_NAMES = {
     transmuteArcanite = "Transmute: Arcanite",
     transmuteUndeathToWater = "Transmute: Undeath to Water",
     transmuteMithrilToTruesilver = "Transmute: Mithril to Truesilver",
-    transmuteIronToGold = "Transmute: Iron to Gold"
+    transmuteIronToGold = "Transmute: Iron to Gold",
+    transmutePrimalManaToFire = "Transmute: Primal Mana to Fire",
+    transmutePrimalShadowToWater = "Transmute: Primal Shadow to Water",
+    transmutePrimalAirToFire = "Transmute: Primal Air to Fire",
+    transmutePrimalWaterToShadow = "Transmute: Primal Water to Shadow",
+    transmutePrimalEarthToWater = "Transmute: Primal Earth to Water",
+    transmuteEarthstormDiamond = "Transmute: Earthstorm Diamond",
+    transmuteSkyfireDiamond = "Transmute: Skyfire Diamond"
 }
 
 -- Spell IDs for each cooldown type (used to check if player knows the craft)
@@ -74,7 +84,14 @@ PL.COOLDOWN_SPELLS = {
     transmuteArcanite = 17187,
     transmuteUndeathToWater = 17561,
     transmuteMithrilToTruesilver = 11480,
-    transmuteIronToGold = 11479
+    transmuteIronToGold = 11479,
+    transmutePrimalManaToFire = 28582,
+    transmutePrimalShadowToWater = 28580,
+    transmutePrimalAirToFire = 28566,
+    transmutePrimalWaterToShadow = 28581,
+    transmutePrimalEarthToWater = 28567,
+    transmuteEarthstormDiamond = 32765,
+    transmuteSkyfireDiamond = 32766
 }
 
 -- Cooldown durations
@@ -87,7 +104,14 @@ PL.COOLDOWN_DURATIONS = {
     transmuteArcanite = 0, -- No cooldown in TBC Anniversary
     transmuteUndeathToWater = 86400,
     transmuteMithrilToTruesilver = 72000,
-    transmuteIronToGold = 72000
+    transmuteIronToGold = 72000,
+    transmutePrimalManaToFire = 72000,
+    transmutePrimalShadowToWater = 72000,
+    transmutePrimalAirToFire = 72000,
+    transmutePrimalWaterToShadow = 72000,
+    transmutePrimalEarthToWater = 72000,
+    transmuteEarthstormDiamond = 72000,
+    transmuteSkyfireDiamond = 72000
 }
 
 -- Source information for cooldown crafts
@@ -129,7 +153,14 @@ PL.COOLDOWN_TO_PROFESSION = {
     transmuteArcanite = "alchemy",
     transmuteUndeathToWater = "alchemy",
     transmuteMithrilToTruesilver = "alchemy",
-    transmuteIronToGold = "alchemy"
+    transmuteIronToGold = "alchemy",
+    transmutePrimalManaToFire = "alchemy",
+    transmutePrimalShadowToWater = "alchemy",
+    transmutePrimalAirToFire = "alchemy",
+    transmutePrimalWaterToShadow = "alchemy",
+    transmutePrimalEarthToWater = "alchemy",
+    transmuteEarthstormDiamond = "alchemy",
+    transmuteSkyfireDiamond = "alchemy"
 }
 
 -- Detect professions for a character (TBC Classic API)
@@ -369,6 +400,32 @@ function PL:GetCharacterCooldowns(charKey)
     end
 
     return cooldowns
+end
+
+-- Get all ready cooldowns across all characters (for login notification)
+function PL:GetAllReadyCooldowns()
+    local ready = {}
+    local characters = self:GetAllCharacters()
+
+    for _, charInfo in ipairs(characters) do
+        local charKey = charInfo.key
+        local charData = charInfo.data
+
+        if self:HasRelevantProfessions(charKey) then
+            local cooldowns = self:GetCharacterCooldowns(charKey)
+            for _, cd in ipairs(cooldowns) do
+                if cd.remaining ~= nil and cd.remaining <= 0 then
+                    table.insert(ready, {
+                        charName = charData.name,
+                        charClass = charData.class,
+                        craftName = cd.name
+                    })
+                end
+            end
+        end
+    end
+
+    return ready
 end
 
 -- Check if character has Tailoring or Alchemy profession

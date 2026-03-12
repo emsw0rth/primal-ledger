@@ -10,6 +10,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
 - **Keybinding support** - Set a custom keybind in Key Bindings > AddOns > Primal Ledger
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe
+- **Login notifications** - See all ready cooldowns across your characters when you log in
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
 - **Sources tab** - View pattern sources with clickable item links, vendor targeting, and TomTom waypoints
@@ -30,10 +31,13 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
 | Craft | Cooldown |
 |-------|----------|
 | Transmute: Primal Might | 20 hours |
-| Transmute: Arcanite | 48 hours |
-| Transmute: Undeath to Water | 24 hours |
-| Transmute: Mithril to Truesilver | 20 hours |
-| Transmute: Iron to Gold | 20 hours |
+| Transmute: Primal Mana to Fire | 20 hours |
+| Transmute: Primal Shadow to Water | 20 hours |
+| Transmute: Primal Air to Fire | 20 hours |
+| Transmute: Primal Water to Shadow | 20 hours |
+| Transmute: Primal Earth to Water | 20 hours |
+| Transmute: Earthstorm Diamond | 20 hours |
+| Transmute: Skyfire Diamond | 20 hours |
 
 ## Installation
 

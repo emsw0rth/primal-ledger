@@ -7,7 +7,7 @@ local addonName, PL = ...
 BINDING_HEADER_PRIMALLEDGER = "Primal Ledger"
 
 -- Addon namespace
-PL.version = "1.2.0"
+PL.version = "1.3.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -51,6 +51,11 @@ function PL:OnPlayerLogin()
     self:UpdateCurrentCharacter()
     self:CreateMinimapButton()
     self:CreateMainFrame()
+
+    -- Show notification window after a short delay to let data settle
+    C_Timer.After(2, function()
+        PL:ShowNotificationWindow()
+    end)
 end
 
 -- Called when player casts a spell

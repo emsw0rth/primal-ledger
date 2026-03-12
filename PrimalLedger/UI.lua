@@ -991,6 +991,98 @@ function PL:SelectTab(tabIndex)
     self:UpdateMainFrame()
 end
 
+-- Notification window for ready cooldowns on login
+function PL:ShowNotificationWindow()
+    local readyCooldowns = self:GetAllReadyCooldowns()
+    if #readyCooldowns == 0 then return end
+
+    -- Remove existing notification if shown
+    if self.notificationFrame then
+        self.notificationFrame:Hide()
+        self.notificationFrame = nil
+    end
+
+    local NOTIF_PADDING = 10
+    local NOTIF_ROW_HEIGHT = 16
+    local NOTIF_HEADER_HEIGHT = 20
+
+    local frame = CreateFrame("Frame", "PrimalLedgerNotification", UIParent, "BackdropTemplate")
+    frame:SetFrameStrata("DIALOG")
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:SetClampedToScreen(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+
+    frame:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 }
+    })
+    frame:SetBackdropColor(0.1, 0.1, 0.1, 0.92)
+    frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
+    -- Title
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, -NOTIF_PADDING)
+    title:SetText("Primal Ledger")
+    title:SetTextColor(0.9, 0.9, 0.9)
+
+    -- Close button
+    local closeBtn = CreateFrame("Button", nil, frame)
+    closeBtn:SetSize(14, 14)
+    closeBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -NOTIF_PADDING, -NOTIF_PADDING)
+
+    local closeBtnText = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    closeBtnText:SetPoint("CENTER", 0, 0)
+    closeBtnText:SetText("X")
+    closeBtnText:SetTextColor(0.6, 0.6, 0.6)
+
+    closeBtn:SetScript("OnEnter", function() closeBtnText:SetTextColor(1, 0.3, 0.3) end)
+    closeBtn:SetScript("OnLeave", function() closeBtnText:SetTextColor(0.6, 0.6, 0.6) end)
+    closeBtn:SetScript("OnClick", function() frame:Hide() end)
+
+    -- Separator
+    local sep = frame:CreateTexture(nil, "ARTWORK")
+    sep:SetHeight(1)
+    sep:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT))
+    sep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -NOTIF_PADDING, -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT))
+    sep:SetColorTexture(0.3, 0.3, 0.3, 1)
+
+    -- Build rows
+    local maxTextWidth = 0
+    local contentTop = -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT + 6)
+
+    for i, entry in ipairs(readyCooldowns) do
+        local row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        local yOffset = contentTop - ((i - 1) * NOTIF_ROW_HEIGHT)
+        row:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, yOffset)
+
+        local classColor = CLASS_COLORS[entry.charClass] or { r = 1, g = 1, b = 1 }
+        local colorCode = string.format("|cff%02x%02x%02x",
+            math.floor(classColor.r * 255),
+            math.floor(classColor.g * 255),
+            math.floor(classColor.b * 255))
+
+        row:SetText(colorCode .. entry.charName .. "|r  |cff888888|||r  |cff00ff00" .. entry.craftName .. " available!|r")
+
+        local textWidth = row:GetStringWidth()
+        if textWidth > maxTextWidth then
+            maxTextWidth = textWidth
+        end
+    end
+
+    -- Size the frame to fit content
+    local frameWidth = maxTextWidth + (NOTIF_PADDING * 2) + 10
+    local frameHeight = NOTIF_PADDING + NOTIF_HEADER_HEIGHT + 6 + (#readyCooldowns * NOTIF_ROW_HEIGHT) + NOTIF_PADDING
+    frame:SetSize(math.max(frameWidth, 200), frameHeight)
+    frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -200)
+
+    self.notificationFrame = frame
+end
+
 function PL:ToggleMainFrame()
     if not self.mainFrame then
         self:CreateMainFrame()

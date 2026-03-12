@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.0
+
+### New Features
+- **Login Notifications** - On login, a notification popup shows all ready cooldowns across all your characters
+- **TBC Alchemy Transmutes** - Added 7 new transmutes:
+  - Transmute: Primal Mana to Fire
+  - Transmute: Primal Shadow to Water
+  - Transmute: Primal Air to Fire
+  - Transmute: Primal Water to Shadow
+  - Transmute: Primal Earth to Water
+  - Transmute: Earthstorm Diamond
+  - Transmute: Skyfire Diamond
+
+---
+
 ## v1.2.0
 
 ### New Features
