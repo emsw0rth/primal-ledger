@@ -7,7 +7,7 @@ local addonName, PL = ...
 BINDING_HEADER_PRIMALLEDGER = "Primal Ledger"
 
 -- Addon namespace
-PL.version = "1.3.0"
+PL.version = "1.5.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -18,6 +18,8 @@ eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 eventFrame:RegisterEvent("TRADE_SKILL_SHOW")
 eventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
+eventFrame:RegisterEvent("CRAFT_SHOW")
+eventFrame:RegisterEvent("CRAFT_UPDATE")
 
 -- Event handler
 eventFrame:SetScript("OnEvent", function(self, event, ...)
@@ -35,6 +37,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_UPDATE" then
         PL:OnTradeSkillUpdate()
+    elseif event == "CRAFT_SHOW" or event == "CRAFT_UPDATE" then
+        PL:OnCraftUpdate()
     end
 end)
 
@@ -68,6 +72,13 @@ function PL:OnTradeSkillUpdate()
     if not self.playerLoggedIn then return end
     local charKey = self:GetCharacterKey()
     self:ScanTradeSkillWindow(charKey)
+    self:CreateExportButton()
+end
+
+-- Called when craft window (Enchanting) is shown or updated
+function PL:OnCraftUpdate()
+    if not self.playerLoggedIn then return end
+    self:CreateCraftExportButton()
 end
 
 -- Print helper

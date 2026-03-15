@@ -361,6 +361,14 @@ function PL:FormatTimeRemaining(seconds)
     end
 end
 
+-- Check if a cooldown type is enabled for tracking
+function PL:IsCooldownEnabled(cdType)
+    if not self.db or not self.db.settings or not self.db.settings.disabledCooldowns then
+        return true
+    end
+    return not self.db.settings.disabledCooldowns[cdType]
+end
+
 -- Get all cooldowns for a character that should be displayed
 function PL:GetCharacterCooldowns(charKey)
     local charData = self.db.characters[charKey]
@@ -372,7 +380,7 @@ function PL:GetCharacterCooldowns(charKey)
     -- Check tailoring cooldowns
     if hasProfession(charData.professions.tailoring) then
         for _, cdType in ipairs(self.PROFESSION_COOLDOWNS.tailoring) do
-            if knownCrafts[cdType] then
+            if knownCrafts[cdType] and self:IsCooldownEnabled(cdType) then
                 local remaining = self:GetCooldownRemaining(charKey, cdType)
                 table.insert(cooldowns, {
                     type = cdType,
@@ -387,7 +395,7 @@ function PL:GetCharacterCooldowns(charKey)
     -- Check alchemy cooldowns
     if hasProfession(charData.professions.alchemy) then
         for _, cdType in ipairs(self.PROFESSION_COOLDOWNS.alchemy) do
-            if knownCrafts[cdType] then
+            if knownCrafts[cdType] and self:IsCooldownEnabled(cdType) then
                 local remaining = self:GetCooldownRemaining(charKey, cdType)
                 table.insert(cooldowns, {
                     type = cdType,

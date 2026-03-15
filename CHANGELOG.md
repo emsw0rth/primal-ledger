@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.5.0
+
+### New Features
+- **Settings Tab** - New tab with addon configuration options
+  - Toggle login notification popup on/off
+  - Reset Data button with confirmation dialog to wipe all tracked data
+- **CD Tracking Tab** - Control which cooldown crafts are tracked
+  - Per-cooldown checkboxes grouped by profession (Tailoring / Alchemy)
+  - Disabled cooldowns are hidden from the Cooldowns tab and login notifications
+  - Settings persist across all characters and sessions
+- **Craft Export** - Export button on profession windows for sharing crafts to Discord
+  - Appears in the top-right of the TradeSkill and Craft (Enchanting) windows
+  - Generates Discord-formatted text with all recipes grouped by category
+  - Copyable text box with select-all support
+
+---
+
+## v1.4.0
+
+### New Features
+- **Settings Tab** - Initial settings tab with notification toggle and data reset
+- **CD Tracking Tab** - Initial cooldown tracking filter
+
+---
+
 ## v1.3.0
 
 ### New Features

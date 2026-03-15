@@ -9,6 +9,8 @@ local defaults = {
     settings = {
         minimapPosition = 45,
         framePosition = { point = "CENTER", x = 0, y = 0 },
+        showNotifications = true,
+        disabledCooldowns = {},
     }
 }
 
@@ -22,6 +24,13 @@ function PL:InitializeData()
     for key, value in pairs(defaults) do
         if PrimalLedgerDB[key] == nil then
             PrimalLedgerDB[key] = value
+        end
+    end
+
+    -- Ensure all default settings exist (for upgrades)
+    for key, value in pairs(defaults.settings) do
+        if PrimalLedgerDB.settings[key] == nil then
+            PrimalLedgerDB.settings[key] = value
         end
     end
 
