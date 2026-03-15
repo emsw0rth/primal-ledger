@@ -14,9 +14,9 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
 - **Sources tab** - View pattern sources with clickable item links, vendor targeting, and TomTom waypoints
-- **CD Tracking tab** - Enable or disable tracking for individual cooldown crafts
-- **Settings tab** - Toggle login notifications, reset all data
-- **Craft export** - Export your full recipe list from any profession window, formatted for Discord
+- **Settings tab** - Toggle login notifications, reset all data, open CD Tracking
+- **CD Tracking** - Enable or disable tracking for individual cooldown crafts (standalone window from Settings)
+- **Craft export** - Export your recipe list from any profession window, with per-craft selection, formatted for Discord
 
 ## Tracked Cooldowns
 
@@ -65,9 +65,9 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)
-- **CD Tracking tab**: Enable/disable individual cooldown crafts from being tracked
-- **Settings tab**: Toggle login notifications on/off, reset all tracked data
-- **Export crafts**: Open any profession window and click the **Export** button to get a Discord-formatted recipe list
+- **Settings tab**: Toggle login notifications on/off, reset all tracked data, open CD Tracking
+- **CD Tracking**: Click "CD Tracking" in Settings to open a window where you can enable/disable individual cooldown crafts
+- **Export crafts**: Open any profession window, click **Export**, select which crafts to include, then export as Discord-formatted text
 
 ## Slash Commands
 

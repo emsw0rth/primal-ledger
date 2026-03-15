@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.6.0
+
+### New Features
+- **Header image** - Custom Outland-themed header banner at the top of the main window
+- **Outland color theme** - Full UI restyled with a dark bronze/fiery color scheme matching the header art
+- **CD Tracking window** - Moved from its own tab to a standalone window, accessible via a button in Settings
+- **Improved craft export** - Two-step export flow:
+  - Selection window shows all crafts with checkboxes (all checked by default)
+  - Uncheck crafts you don't want, then click Export
+  - Text window shows only the selected crafts, formatted for Discord
+
+### Improvements
+- Reduced tab count from 5 to 4 (Overview, Cooldowns, Sources, Settings)
+- All UI elements (borders, separators, tabs, buttons, text) use a consistent warm color palette
+- Notification window restyled to match the Outland theme
+
+---
+
 ## v1.5.0
 
 ### New Features
