@@ -10,6 +10,9 @@ local defaults = {
         minimapPosition = 45,
         framePosition = { point = "CENTER", x = 0, y = 0 },
         showNotifications = true,
+        showTrackerWindow = true,
+        trackerMode = "static",
+        trackerPosition = nil,
         disabledCooldowns = {},
     }
 }

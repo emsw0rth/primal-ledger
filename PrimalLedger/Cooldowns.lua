@@ -10,7 +10,9 @@ PL.COOLDOWNS = {
     [36686] = { name = "Shadowcloth", type = "shadowcloth", duration = 331200 },
     [26751] = { name = "Primal Mooncloth", type = "primalMooncloth", duration = 331200 },
     [31373] = { name = "Spellcloth", type = "spellcloth", duration = 331200 },
-    [18560] = { name = "Mooncloth", type = "mooncloth", duration = 0 }, -- No cooldown in TBC Anniversary
+
+    -- Leatherworking cooldowns
+    [19566] = { name = "Salt Shaker", type = "saltShaker", duration = 255600 },                        -- 2d 23h
 
     -- Alchemy cooldowns
     [29688] = { name = "Transmute: Primal Might", type = "primalMight", duration = 72000 },           -- 20 hours
@@ -21,6 +23,7 @@ PL.COOLDOWNS = {
     [28567] = { name = "Transmute: Primal Earth to Water", type = "transmutePrimalEarthToWater", duration = 72000 }, -- 20 hours
     [32765] = { name = "Transmute: Earthstorm Diamond", type = "transmuteEarthstormDiamond", duration = 72000 }, -- 20 hours
     [32766] = { name = "Transmute: Skyfire Diamond", type = "transmuteSkyfireDiamond", duration = 72000 }, -- 20 hours
+    [17561] = { name = "Transmute: Undeath to Water", type = "transmuteUndeathToWater", duration = 86400 }, -- 24 hours
 }
 
 -- Profession names for detection
@@ -50,8 +53,9 @@ end
 
 -- Cooldown types by profession
 PL.PROFESSION_COOLDOWNS = {
-    tailoring = { "shadowcloth", "primalMooncloth", "spellcloth", "mooncloth" },
-    alchemy = { "primalMight", "transmuteArcanite", "transmuteUndeathToWater", "transmuteMithrilToTruesilver", "transmuteIronToGold", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
+    tailoring = { "shadowcloth", "primalMooncloth", "spellcloth" },
+    leatherworking = { "saltShaker" },
+    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
 }
 
 -- Friendly names for cooldown types
@@ -59,12 +63,11 @@ PL.COOLDOWN_NAMES = {
     shadowcloth = "Shadowcloth",
     primalMooncloth = "Primal Mooncloth",
     spellcloth = "Spellcloth",
-    mooncloth = "Mooncloth",
+
+    saltShaker = "Salt Shaker",
+
     primalMight = "Transmute: Primal Might",
-    transmuteArcanite = "Transmute: Arcanite",
     transmuteUndeathToWater = "Transmute: Undeath to Water",
-    transmuteMithrilToTruesilver = "Transmute: Mithril to Truesilver",
-    transmuteIronToGold = "Transmute: Iron to Gold",
     transmutePrimalManaToFire = "Transmute: Primal Mana to Fire",
     transmutePrimalShadowToWater = "Transmute: Primal Shadow to Water",
     transmutePrimalAirToFire = "Transmute: Primal Air to Fire",
@@ -79,12 +82,11 @@ PL.COOLDOWN_SPELLS = {
     shadowcloth = 36686,
     primalMooncloth = 26751,
     spellcloth = 31373,
-    mooncloth = 18560,
+
+    saltShaker = 19566,
+
     primalMight = 29688,
-    transmuteArcanite = 17187,
     transmuteUndeathToWater = 17561,
-    transmuteMithrilToTruesilver = 11480,
-    transmuteIronToGold = 11479,
     transmutePrimalManaToFire = 28582,
     transmutePrimalShadowToWater = 28580,
     transmutePrimalAirToFire = 28566,
@@ -99,12 +101,11 @@ PL.COOLDOWN_DURATIONS = {
     shadowcloth = 331200, -- 92 hours
     primalMooncloth = 331200, -- 92 hours
     spellcloth = 331200, -- 92 hours
-    mooncloth = 0, -- No cooldown in TBC Anniversary
+
+    saltShaker = 255600, -- 2d 23h
+
     primalMight = 72000,
-    transmuteArcanite = 0, -- No cooldown in TBC Anniversary
-    transmuteUndeathToWater = 86400,
-    transmuteMithrilToTruesilver = 72000,
-    transmuteIronToGold = 72000,
+    transmuteUndeathToWater = 86400, -- 24 hours
     transmutePrimalManaToFire = 72000,
     transmutePrimalShadowToWater = 72000,
     transmutePrimalAirToFire = 72000,
@@ -140,6 +141,7 @@ PL.COOLDOWN_SOURCES = {
 -- Profession spell names (for opening the tradeskill window)
 PL.PROFESSION_SPELLS = {
     tailoring = "Tailoring",
+    leatherworking = "Leatherworking",
     alchemy = "Alchemy"
 }
 
@@ -148,12 +150,11 @@ PL.COOLDOWN_TO_PROFESSION = {
     shadowcloth = "tailoring",
     primalMooncloth = "tailoring",
     spellcloth = "tailoring",
-    mooncloth = "tailoring",
+
+    saltShaker = "leatherworking",
+
     primalMight = "alchemy",
-    transmuteArcanite = "alchemy",
     transmuteUndeathToWater = "alchemy",
-    transmuteMithrilToTruesilver = "alchemy",
-    transmuteIronToGold = "alchemy",
     transmutePrimalManaToFire = "alchemy",
     transmutePrimalShadowToWater = "alchemy",
     transmutePrimalAirToFire = "alchemy",
@@ -241,6 +242,60 @@ function PL:DetectKnownCrafts(charKey)
     for cdType, spellID in pairs(self.COOLDOWN_SPELLS) do
         if IsSpellKnown(spellID) then
             charData.knownCrafts[cdType] = true
+        end
+    end
+
+    -- Detect item-based cooldowns (e.g. Salt Shaker) by scanning bags
+    self:DetectItemCooldowns(charKey)
+end
+
+-- Item IDs for item-based cooldowns
+PL.COOLDOWN_ITEMS = {
+    saltShaker = 15846,
+}
+
+-- Container API compatibility (renamed in some client versions)
+local GetContainerNumSlots = GetContainerNumSlots or C_Container.GetContainerNumSlots
+local GetContainerItemID = GetContainerItemID or C_Container.GetContainerItemID
+local GetContainerItemCooldown = GetContainerItemCooldown or C_Container.GetContainerItemCooldown
+
+-- Detect item-based cooldowns by scanning bags
+function PL:DetectItemCooldowns(charKey)
+    local charData = self.db.characters[charKey]
+    if not charData then return end
+
+    charData.knownCrafts = charData.knownCrafts or {}
+    charData.cooldowns = charData.cooldowns or {}
+
+    for cdType, itemID in pairs(self.COOLDOWN_ITEMS) do
+        local found = false
+        for bag = 0, 4 do
+            local numSlots = GetContainerNumSlots(bag)
+            for slot = 1, numSlots do
+                local itemId = GetContainerItemID(bag, slot)
+                if itemId == itemID then
+                    found = true
+                    charData.knownCrafts[cdType] = true
+
+                    -- Check item cooldown
+                    local startTime, duration, isEnabled = GetContainerItemCooldown(bag, slot)
+                    if startTime and startTime > 0 and duration > 0 and isEnabled == 1 then
+                        local remaining = (startTime + duration) - GetTime()
+                        if remaining > 0 then
+                            charData.cooldowns[cdType] = GetTime() + remaining
+                        else
+                            charData.cooldowns[cdType] = 0
+                        end
+                    else
+                        -- No cooldown active, mark as ready (only if not already tracked)
+                        if not charData.cooldowns[cdType] then
+                            charData.cooldowns[cdType] = 0
+                        end
+                    end
+                    break
+                end
+            end
+            if found then break end
         end
     end
 end
@@ -392,6 +447,21 @@ function PL:GetCharacterCooldowns(charKey)
         end
     end
 
+    -- Check leatherworking cooldowns
+    if hasProfession(charData.professions.leatherworking) then
+        for _, cdType in ipairs(self.PROFESSION_COOLDOWNS.leatherworking) do
+            if knownCrafts[cdType] and self:IsCooldownEnabled(cdType) then
+                local remaining = self:GetCooldownRemaining(charKey, cdType)
+                table.insert(cooldowns, {
+                    type = cdType,
+                    name = self.COOLDOWN_NAMES[cdType],
+                    remaining = remaining,
+                    formattedTime = self:FormatTimeRemaining(remaining)
+                })
+            end
+        end
+    end
+
     -- Check alchemy cooldowns
     if hasProfession(charData.professions.alchemy) then
         for _, cdType in ipairs(self.PROFESSION_COOLDOWNS.alchemy) do
@@ -441,7 +511,7 @@ function PL:HasRelevantProfessions(charKey)
     local charData = self.db.characters[charKey]
     if not charData or not charData.professions then return false end
 
-    return hasProfession(charData.professions.tailoring) or hasProfession(charData.professions.alchemy)
+    return hasProfession(charData.professions.tailoring) or hasProfession(charData.professions.leatherworking) or hasProfession(charData.professions.alchemy)
 end
 
 -- Open profession window and select a specific recipe

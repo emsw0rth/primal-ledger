@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.7.0
+
+### New Features
+- **Cooldown Tracker Window** - Persistent, semi-transparent overlay showing live countdowns for all tracked cooldowns across all characters
+  - Displays "Available" in green when a cooldown is ready
+  - Draggable with saved position (remembers where you put it between sessions)
+  - Close button to dismiss without changing settings
+- **Tracker Display Mode** - Dropdown in Settings to control tracker visibility:
+  - **Static** - Show tracker at all times (default)
+  - **Conditional** - Automatically hide tracker when in a party, raid, or combat
+- **Salt Shaker tracking** - Track the Salt Shaker item cooldown (2d 23h) for Leatherworkers
+  - Automatically detected via bag scanning when the item is in your inventory
+
+### Removed
+- **Login notification window** - Replaced by the always-visible tracker window
+- **Mooncloth** cooldown (no cooldown in TBC Anniversary)
+- **Old-world transmutes** - Removed Transmute: Arcanite, Mithril to Truesilver, and Iron to Gold
+
+### Tracked Cooldowns
+**Tailoring:** Shadowcloth, Spellcloth, Primal Mooncloth
+
+**Leatherworking:** Salt Shaker
+
+**Alchemy:** Transmute Primal Might, Transmute Undeath to Water, Transmute Primal Mana to Fire, Transmute Primal Shadow to Water, Transmute Primal Air to Fire, Transmute Primal Water to Shadow, Transmute Earthstorm Diamond, Transmute Skyfire Diamond
+
+---
+
 ## v1.6.1
 
 ### Removed

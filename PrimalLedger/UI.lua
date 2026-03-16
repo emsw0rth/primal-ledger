@@ -357,12 +357,12 @@ function PL:CreateMainFrame()
         frame:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
     end
 
-    -- Update timer
+    -- Update timer (skip settings tab - it's static content and re-rendering closes dropdowns)
     frame:SetScript("OnUpdate", function(self, elapsed)
         self.timeSinceUpdate = (self.timeSinceUpdate or 0) + elapsed
         if self.timeSinceUpdate >= 1 then
             self.timeSinceUpdate = 0
-            if self:IsShown() then
+            if self:IsShown() and PL.mainFrame.selectedTab ~= 4 then
                 PL:UpdateMainFrame()
             end
         end
@@ -1019,18 +1019,23 @@ function PL:UpdateMainFrame()
 
         local yOffset = -PADDING
 
-        -- Notification checkbox
+        -- Tracker window checkbox
         local checkBtn = self.mainFrame.settingsCheckBtn
         if not checkBtn then
-            checkBtn = CreateFrame("CheckButton", "PrimalLedgerNotifCheck", content, "UICheckButtonTemplate")
+            checkBtn = CreateFrame("CheckButton", "PrimalLedgerTrackerCheck", content, "UICheckButtonTemplate")
             checkBtn:SetSize(24, 24)
             self.mainFrame.settingsCheckBtn = checkBtn
         end
         checkBtn:ClearAllPoints()
         checkBtn:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
-        checkBtn:SetChecked(self.db.settings.showNotifications ~= false)
+        checkBtn:SetChecked(self.db.settings.showTrackerWindow ~= false)
         checkBtn:SetScript("OnClick", function(self)
-            PL.db.settings.showNotifications = self:GetChecked()
+            PL.db.settings.showTrackerWindow = self:GetChecked()
+            if self:GetChecked() then
+                PL:ShowTrackerWindow()
+            else
+                PL:HideTrackerWindow()
+            end
         end)
         checkBtn:Show()
         table.insert(self.mainFrame.settingsWidgets, checkBtn)
@@ -1042,10 +1047,79 @@ function PL:UpdateMainFrame()
         end
         checkLabel:ClearAllPoints()
         checkLabel:SetPoint("LEFT", checkBtn, "RIGHT", 4, 0)
-        checkLabel:SetText("Show \"Craft available\" reminder on login")
+        checkLabel:SetText("Show cooldown tracker window")
         checkLabel:SetTextColor(unpack(COLORS.textNormal))
         checkLabel:Show()
         table.insert(self.mainFrame.settingsWidgets, checkLabel)
+
+        -- Tracker mode dropdown
+        local modeDropdown = self.mainFrame.settingsTrackerDropdown
+        if not modeDropdown then
+            modeDropdown = CreateFrame("Frame", "PrimalLedgerTrackerModeDropdown", content, "UIDropDownMenuTemplate")
+            self.mainFrame.settingsTrackerDropdown = modeDropdown
+        end
+        modeDropdown:ClearAllPoints()
+        modeDropdown:SetPoint("LEFT", checkLabel, "RIGHT", 0, -2)
+        UIDropDownMenu_SetWidth(modeDropdown, 100)
+
+        local currentMode = self.db.settings.trackerMode or "static"
+        local modeLabels = { static = "Static", conditional = "Conditional" }
+        UIDropDownMenu_SetText(modeDropdown, modeLabels[currentMode] or "Static")
+
+        UIDropDownMenu_Initialize(modeDropdown, function(self, level)
+            local info = UIDropDownMenu_CreateInfo()
+
+            info.text = "Static"
+            info.value = "static"
+            info.checked = (PL.db.settings.trackerMode or "static") == "static"
+            info.func = function()
+                PL.db.settings.trackerMode = "static"
+                UIDropDownMenu_SetText(modeDropdown, "Static")
+                PL:EvaluateTrackerVisibility()
+            end
+            UIDropDownMenu_AddButton(info)
+
+            info.text = "Conditional"
+            info.value = "conditional"
+            info.checked = PL.db.settings.trackerMode == "conditional"
+            info.func = function()
+                PL.db.settings.trackerMode = "conditional"
+                UIDropDownMenu_SetText(modeDropdown, "Conditional")
+                PL:EvaluateTrackerVisibility()
+            end
+            UIDropDownMenu_AddButton(info)
+        end)
+        modeDropdown:Show()
+        table.insert(self.mainFrame.settingsWidgets, modeDropdown)
+
+        -- Help tooltip button (?)
+        local helpBtn = self.mainFrame.settingsTrackerHelp
+        if not helpBtn then
+            helpBtn = CreateFrame("Button", nil, content)
+            helpBtn:SetSize(16, 16)
+            self.mainFrame.settingsTrackerHelp = helpBtn
+
+            local helpText = helpBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            helpText:SetPoint("CENTER", 0, 0)
+            helpText:SetText("?")
+            helpText:SetTextColor(unpack(COLORS.accent))
+            helpBtn.text = helpText
+        end
+        helpBtn:ClearAllPoints()
+        helpBtn:SetPoint("LEFT", modeDropdown, "RIGHT", -8, 2)
+        helpBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine("Tracker Display Mode", unpack(COLORS.accent))
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("Static - Show window at all times", 0.85, 0.80, 0.70)
+            GameTooltip:AddLine("Conditional - Hide window when in party, raid or combat", 0.85, 0.80, 0.70)
+            GameTooltip:Show()
+        end)
+        helpBtn:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        helpBtn:Show()
+        table.insert(self.mainFrame.settingsWidgets, helpBtn)
 
         yOffset = yOffset - 40
 
@@ -1161,31 +1235,25 @@ function PL:SelectTab(tabIndex)
     self:UpdateMainFrame()
 end
 
--- Notification window for ready cooldowns on login
-function PL:ShowNotificationWindow()
-    if self.db.settings.showNotifications == false then return end
+-- Tracker window for cooldown countdowns
+function PL:CreateTrackerWindow()
+    if self.trackerFrame then return end
 
-    local readyCooldowns = self:GetAllReadyCooldowns()
-    if #readyCooldowns == 0 then return end
+    local TRACKER_PADDING = 8
+    local TRACKER_ROW_HEIGHT = 14
 
-    -- Remove existing notification if shown
-    if self.notificationFrame then
-        self.notificationFrame:Hide()
-        self.notificationFrame = nil
-    end
-
-    local NOTIF_PADDING = 10
-    local NOTIF_ROW_HEIGHT = 16
-    local NOTIF_HEADER_HEIGHT = 20
-
-    local frame = CreateFrame("Frame", "PrimalLedgerNotification", UIParent, "BackdropTemplate")
-    frame:SetFrameStrata("DIALOG")
+    local frame = CreateFrame("Frame", "PrimalLedgerTracker", UIParent, "BackdropTemplate")
+    frame:SetFrameStrata("BACKGROUND")
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:SetClampedToScreen(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript("OnDragStop", function(f)
+        f:StopMovingOrSizing()
+        local point, _, _, x, y = f:GetPoint()
+        PL.db.settings.trackerPosition = { point = point, x = x, y = y }
+    end)
 
     frame:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -1193,19 +1261,19 @@ function PL:ShowNotificationWindow()
         edgeSize = 1,
         insets = { left = 1, right = 1, top = 1, bottom = 1 }
     })
-    frame:SetBackdropColor(unpack(COLORS.bg))
-    frame:SetBackdropBorderColor(unpack(COLORS.border))
+    frame:SetBackdropColor(0.08, 0.05, 0.03, 0.70)
+    frame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70)
 
     -- Title
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, -NOTIF_PADDING)
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, -TRACKER_PADDING)
     title:SetText("Primal Ledger")
     title:SetTextColor(unpack(COLORS.accent))
 
     -- Close button
     local closeBtn = CreateFrame("Button", nil, frame)
-    closeBtn:SetSize(14, 14)
-    closeBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -NOTIF_PADDING, -NOTIF_PADDING)
+    closeBtn:SetSize(12, 12)
+    closeBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -TRACKER_PADDING + 2, -TRACKER_PADDING + 2)
 
     local closeBtnText = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     closeBtnText:SetPoint("CENTER", 0, 0)
@@ -1214,23 +1282,97 @@ function PL:ShowNotificationWindow()
 
     closeBtn:SetScript("OnEnter", function() closeBtnText:SetTextColor(unpack(COLORS.closeHover)) end)
     closeBtn:SetScript("OnLeave", function() closeBtnText:SetTextColor(unpack(COLORS.textDim)) end)
-    closeBtn:SetScript("OnClick", function() frame:Hide() end)
+    closeBtn:SetScript("OnClick", function()
+        frame:Hide()
+        PL.trackerManuallyHidden = true
+    end)
 
-    -- Separator
-    local sep = frame:CreateTexture(nil, "ARTWORK")
-    sep:SetHeight(1)
-    sep:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT))
-    sep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -NOTIF_PADDING, -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT))
-    sep:SetColorTexture(unpack(COLORS.separator))
+    -- Store rows for reuse
+    frame.rows = {}
+    frame.title = title
+    frame.padding = TRACKER_PADDING
+    frame.rowHeight = TRACKER_ROW_HEIGHT
 
-    -- Build rows
+    self.trackerFrame = frame
+
+    -- Restore saved position or default to top-right
+    if self.db.settings.trackerPosition then
+        local pos = self.db.settings.trackerPosition
+        frame:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+    else
+        frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -200)
+    end
+
+    -- Update cooldown text every second
+    frame:SetScript("OnUpdate", function(f, elapsed)
+        f.elapsed = (f.elapsed or 0) + elapsed
+        if f.elapsed < 1 then return end
+        f.elapsed = 0
+        PL:UpdateTrackerWindow()
+    end)
+
+    self:UpdateTrackerWindow()
+end
+
+function PL:UpdateTrackerWindow()
+    if not self.trackerFrame then return end
+    local frame = self.trackerFrame
+
+    local TRACKER_PADDING = frame.padding
+    local TRACKER_ROW_HEIGHT = frame.rowHeight
+
+    -- Gather all cooldowns across all characters
+    local entries = {}
+    local characters = self:GetAllCharacters()
+
+    for _, charInfo in ipairs(characters) do
+        if self:HasRelevantProfessions(charInfo.key) then
+            local cooldowns = self:GetCharacterCooldowns(charInfo.key)
+            for _, cd in ipairs(cooldowns) do
+                table.insert(entries, {
+                    charName = charInfo.data.name,
+                    charClass = charInfo.data.class,
+                    craftName = cd.name,
+                    remaining = cd.remaining,
+                })
+            end
+        end
+    end
+
+    -- Hide all existing rows
+    for _, row in ipairs(frame.rows) do
+        row:Hide()
+    end
+
+    if #entries == 0 then
+        frame:SetSize(160, TRACKER_PADDING * 2 + 14)
+        -- Show "No tracked cooldowns" message
+        local row = frame.rows[1]
+        if not row then
+            row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            frame.rows[1] = row
+        end
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, -(TRACKER_PADDING + 16))
+        row:SetText("|cff" .. "998877" .. "No tracked cooldowns|r")
+        row:Show()
+        return
+    end
+
+    -- Build display rows
     local maxTextWidth = 0
-    local contentTop = -(NOTIF_PADDING + NOTIF_HEADER_HEIGHT + 6)
+    local contentTop = -(TRACKER_PADDING + 16)
 
-    for i, entry in ipairs(readyCooldowns) do
-        local row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        local yOffset = contentTop - ((i - 1) * NOTIF_ROW_HEIGHT)
-        row:SetPoint("TOPLEFT", frame, "TOPLEFT", NOTIF_PADDING, yOffset)
+    for i, entry in ipairs(entries) do
+        local row = frame.rows[i]
+        if not row then
+            row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            frame.rows[i] = row
+        end
+
+        row:ClearAllPoints()
+        local yOffset = contentTop - ((i - 1) * TRACKER_ROW_HEIGHT)
+        row:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, yOffset)
 
         local classColor = CLASS_COLORS[entry.charClass] or { r = 1, g = 1, b = 1 }
         local colorCode = string.format("|cff%02x%02x%02x",
@@ -1238,7 +1380,17 @@ function PL:ShowNotificationWindow()
             math.floor(classColor.g * 255),
             math.floor(classColor.b * 255))
 
-        row:SetText(colorCode .. entry.charName .. "|r  |cff664d32|||r  |cff33cc33" .. entry.craftName .. " available!|r")
+        local timeText
+        if entry.remaining == nil then
+            timeText = "|cff998877Unknown|r"
+        elseif entry.remaining <= 0 then
+            timeText = "|cff33cc33Available|r"
+        else
+            timeText = "|cffddcc99" .. self:FormatTimeRemaining(entry.remaining) .. "|r"
+        end
+
+        row:SetText(colorCode .. entry.charName .. "|r |cff664d32-|r " .. entry.craftName .. ": " .. timeText)
+        row:Show()
 
         local textWidth = row:GetStringWidth()
         if textWidth > maxTextWidth then
@@ -1247,12 +1399,46 @@ function PL:ShowNotificationWindow()
     end
 
     -- Size the frame to fit content
-    local frameWidth = maxTextWidth + (NOTIF_PADDING * 2) + 10
-    local frameHeight = NOTIF_PADDING + NOTIF_HEADER_HEIGHT + 6 + (#readyCooldowns * NOTIF_ROW_HEIGHT) + NOTIF_PADDING
-    frame:SetSize(math.max(frameWidth, 200), frameHeight)
-    frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -200)
+    local frameWidth = maxTextWidth + (TRACKER_PADDING * 2) + 4
+    local frameHeight = TRACKER_PADDING + 16 + (#entries * TRACKER_ROW_HEIGHT) + TRACKER_PADDING
+    frame:SetSize(math.max(frameWidth, 160), frameHeight)
+end
 
-    self.notificationFrame = frame
+function PL:ShowTrackerWindow()
+    if self.db.settings.showTrackerWindow == false then return end
+    self.trackerManuallyHidden = false
+    self:CreateTrackerWindow()
+    self:EvaluateTrackerVisibility()
+end
+
+function PL:HideTrackerWindow()
+    if self.trackerFrame then
+        self.trackerFrame:Hide()
+    end
+end
+
+function PL:ShouldTrackerBeVisible()
+    if self.db.settings.showTrackerWindow == false then return false end
+    if self.trackerManuallyHidden then return false end
+
+    local mode = self.db.settings.trackerMode or "static"
+    if mode == "conditional" then
+        if InCombatLockdown() then return false end
+        local groupCount = (GetNumGroupMembers or GetNumRaidMembers or function() return 0 end)()
+        local partyCount = (GetNumSubgroupMembers or GetNumPartyMembers or function() return 0 end)()
+        if groupCount > 0 or partyCount > 0 then return false end
+    end
+
+    return true
+end
+
+function PL:EvaluateTrackerVisibility()
+    if not self.trackerFrame then return end
+    if self:ShouldTrackerBeVisible() then
+        self.trackerFrame:Show()
+    else
+        self.trackerFrame:Hide()
+    end
 end
 
 function PL:ToggleMainFrame()

@@ -1,8 +1,8 @@
 ## Interface: 20505
 ## Title: Primal Ledger
-## Notes: Track Tailoring and Alchemy cooldowns across all characters
+## Notes: Track Tailoring, Leatherworking, and Alchemy cooldowns across all characters
 ## Author: Emsw0rth
-## Version: 1.6.1
+## Version: 1.7.0
 ## IconTexture: Interface\AddOns\PrimalLedger\assets\icon_map
 ## SavedVariables: PrimalLedgerDB
 

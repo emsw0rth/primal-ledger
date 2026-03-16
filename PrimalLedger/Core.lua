@@ -4,7 +4,7 @@
 local addonName, PL = ...
 
 -- Addon namespace
-PL.version = "1.6.1"
+PL.version = "1.7.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -17,6 +17,10 @@ eventFrame:RegisterEvent("TRADE_SKILL_SHOW")
 eventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 eventFrame:RegisterEvent("CRAFT_SHOW")
 eventFrame:RegisterEvent("CRAFT_UPDATE")
+eventFrame:RegisterEvent("BAG_UPDATE")
+eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 
 -- Event handler
 eventFrame:SetScript("OnEvent", function(self, event, ...)
@@ -36,6 +40,11 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         PL:OnTradeSkillUpdate()
     elseif event == "CRAFT_SHOW" or event == "CRAFT_UPDATE" then
         PL:OnCraftUpdate()
+    elseif event == "BAG_UPDATE" then
+        PL:OnBagUpdate()
+    elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED"
+        or event == "GROUP_ROSTER_UPDATE" then
+        PL:EvaluateTrackerVisibility()
     end
 end)
 
@@ -53,9 +62,9 @@ function PL:OnPlayerLogin()
     self:CreateMinimapButton()
     self:CreateMainFrame()
 
-    -- Show notification window after a short delay to let data settle
+    -- Show tracker window after a short delay to let data settle
     C_Timer.After(2, function()
-        PL:ShowNotificationWindow()
+        PL:ShowTrackerWindow()
     end)
 end
 
@@ -70,6 +79,13 @@ function PL:OnTradeSkillUpdate()
     local charKey = self:GetCharacterKey()
     self:ScanTradeSkillWindow(charKey)
     self:CreateExportButton()
+end
+
+-- Called when bags change (detect item-based cooldowns like Salt Shaker)
+function PL:OnBagUpdate()
+    if not self.playerLoggedIn then return end
+    local charKey = self:GetCharacterKey()
+    self:DetectItemCooldowns(charKey)
 end
 
 -- Called when craft window (Enchanting) is shown or updated
