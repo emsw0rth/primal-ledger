@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.8.0
+
+### New Features
+- **Tracker table layout** - Cooldown tracker window redesigned with aligned columns (Character, Craft, Cooldown)
+  - Bold separator lines between different characters
+  - Striped/faint separator lines between rows of the same character
+- **Tracker transparency slider** - Adjust the tracker window opacity from 10% to 100% in Settings
+- **Lock/Unlock button** - Hover over the tracker window to reveal a Lock/Unlock button (bottom-right)
+  - Locked: window cannot be dragged, close button hidden
+  - Unlocked: window is draggable, close button visible
+- **Tracker visibility checkboxes** - Replaced the display mode dropdown with granular checkboxes:
+  - Show in combat
+  - Show in party/raid
+
+### Removed
+- **Display mode dropdown** - Replaced by individual visibility checkboxes
+- **Tooltip help button** - No longer needed with self-explanatory checkboxes
+
+---
+
 ## v1.7.0
 
 ### New Features

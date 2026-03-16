@@ -9,8 +9,10 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 - **Minimap button** - Click to toggle the cooldown window
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe
-- **Cooldown tracker window** - Semi-transparent overlay with live countdowns, draggable with saved position
-- **Tracker display modes** - Static (always visible) or Conditional (hides in party, raid, or combat)
+- **Cooldown tracker window** - Semi-transparent overlay with live countdowns in a table layout, draggable with saved position
+- **Tracker transparency** - Adjustable opacity slider for the tracker window
+- **Lock/Unlock tracker** - Hover to reveal a lock button; locked tracker hides the close button and prevents dragging
+- **Tracker visibility options** - Independently toggle visibility in combat and in party/raid
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
 - **Sources tab** - View pattern sources with clickable item links, vendor targeting, and TomTom waypoints
@@ -70,7 +72,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)
-- **Settings tab**: Toggle tracker window, select display mode (Static/Conditional), reset all tracked data, open CD Tracking
+- **Settings tab**: Toggle tracker window, adjust transparency, configure visibility options, reset all tracked data, open CD Tracking
 - **CD Tracking**: Click "CD Tracking" in Settings to open a window where you can enable/disable individual cooldown crafts
 - **Export crafts**: Open any profession window, click **Export**, select which crafts to include, then export as Discord-formatted text
 

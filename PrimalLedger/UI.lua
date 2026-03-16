@@ -78,6 +78,20 @@ local ROW_HEIGHT = 16
 local HEADER_HEIGHT = 24
 local PADDING = 10
 
+-- Get the tracker transparency setting as an alpha value (0.0 to 1.0)
+function PL:GetTrackerAlpha()
+    local pct = self.db.settings.trackerOpacity
+    if pct == nil then pct = 100 end
+    return pct / 100
+end
+
+-- Apply transparency to the tracker window
+function PL:ApplyTrackerAlpha()
+    if self.trackerFrame then
+        self.trackerFrame:SetAlpha(self:GetTrackerAlpha())
+    end
+end
+
 -- Create the main frame
 function PL:CreateMainFrame()
     if self.mainFrame then return end
@@ -1052,76 +1066,117 @@ function PL:UpdateMainFrame()
         checkLabel:Show()
         table.insert(self.mainFrame.settingsWidgets, checkLabel)
 
-        -- Tracker mode dropdown
-        local modeDropdown = self.mainFrame.settingsTrackerDropdown
-        if not modeDropdown then
-            modeDropdown = CreateFrame("Frame", "PrimalLedgerTrackerModeDropdown", content, "UIDropDownMenuTemplate")
-            self.mainFrame.settingsTrackerDropdown = modeDropdown
+        yOffset = yOffset - 26
+
+        -- Show in combat checkbox (indented)
+        local combatCheck = self.mainFrame.settingsCombatCheck
+        if not combatCheck then
+            combatCheck = CreateFrame("CheckButton", "PrimalLedgerCombatCheck", content, "UICheckButtonTemplate")
+            combatCheck:SetSize(24, 24)
+            self.mainFrame.settingsCombatCheck = combatCheck
         end
-        modeDropdown:ClearAllPoints()
-        modeDropdown:SetPoint("LEFT", checkLabel, "RIGHT", 0, -2)
-        UIDropDownMenu_SetWidth(modeDropdown, 100)
-
-        local currentMode = self.db.settings.trackerMode or "static"
-        local modeLabels = { static = "Static", conditional = "Conditional" }
-        UIDropDownMenu_SetText(modeDropdown, modeLabels[currentMode] or "Static")
-
-        UIDropDownMenu_Initialize(modeDropdown, function(self, level)
-            local info = UIDropDownMenu_CreateInfo()
-
-            info.text = "Static"
-            info.value = "static"
-            info.checked = (PL.db.settings.trackerMode or "static") == "static"
-            info.func = function()
-                PL.db.settings.trackerMode = "static"
-                UIDropDownMenu_SetText(modeDropdown, "Static")
-                PL:EvaluateTrackerVisibility()
-            end
-            UIDropDownMenu_AddButton(info)
-
-            info.text = "Conditional"
-            info.value = "conditional"
-            info.checked = PL.db.settings.trackerMode == "conditional"
-            info.func = function()
-                PL.db.settings.trackerMode = "conditional"
-                UIDropDownMenu_SetText(modeDropdown, "Conditional")
-                PL:EvaluateTrackerVisibility()
-            end
-            UIDropDownMenu_AddButton(info)
+        combatCheck:ClearAllPoints()
+        combatCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
+        combatCheck:SetChecked(self.db.settings.trackerShowInCombat ~= false)
+        combatCheck:SetScript("OnClick", function(self)
+            PL.db.settings.trackerShowInCombat = self:GetChecked()
+            PL:EvaluateTrackerVisibility()
         end)
-        modeDropdown:Show()
-        table.insert(self.mainFrame.settingsWidgets, modeDropdown)
+        combatCheck:Show()
+        table.insert(self.mainFrame.settingsWidgets, combatCheck)
 
-        -- Help tooltip button (?)
-        local helpBtn = self.mainFrame.settingsTrackerHelp
-        if not helpBtn then
-            helpBtn = CreateFrame("Button", nil, content)
-            helpBtn:SetSize(16, 16)
-            self.mainFrame.settingsTrackerHelp = helpBtn
-
-            local helpText = helpBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            helpText:SetPoint("CENTER", 0, 0)
-            helpText:SetText("?")
-            helpText:SetTextColor(unpack(COLORS.accent))
-            helpBtn.text = helpText
+        local combatLabel = self.mainFrame.settingsCombatLabel
+        if not combatLabel then
+            combatLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsCombatLabel = combatLabel
         end
-        helpBtn:ClearAllPoints()
-        helpBtn:SetPoint("LEFT", modeDropdown, "RIGHT", -8, 2)
-        helpBtn:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine("Tracker Display Mode", unpack(COLORS.accent))
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine("Static - Show window at all times", 0.85, 0.80, 0.70)
-            GameTooltip:AddLine("Conditional - Hide window when in party, raid or combat", 0.85, 0.80, 0.70)
-            GameTooltip:Show()
-        end)
-        helpBtn:SetScript("OnLeave", function()
-            GameTooltip:Hide()
-        end)
-        helpBtn:Show()
-        table.insert(self.mainFrame.settingsWidgets, helpBtn)
+        combatLabel:ClearAllPoints()
+        combatLabel:SetPoint("LEFT", combatCheck, "RIGHT", 4, 0)
+        combatLabel:SetText("Show in combat")
+        combatLabel:SetTextColor(unpack(COLORS.textNormal))
+        combatLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, combatLabel)
 
-        yOffset = yOffset - 40
+        yOffset = yOffset - 26
+
+        -- Show in party/raid checkbox (indented)
+        local groupCheck = self.mainFrame.settingsGroupCheck
+        if not groupCheck then
+            groupCheck = CreateFrame("CheckButton", "PrimalLedgerGroupCheck", content, "UICheckButtonTemplate")
+            groupCheck:SetSize(24, 24)
+            self.mainFrame.settingsGroupCheck = groupCheck
+        end
+        groupCheck:ClearAllPoints()
+        groupCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
+        groupCheck:SetChecked(self.db.settings.trackerShowInGroup ~= false)
+        groupCheck:SetScript("OnClick", function(self)
+            PL.db.settings.trackerShowInGroup = self:GetChecked()
+            PL:EvaluateTrackerVisibility()
+        end)
+        groupCheck:Show()
+        table.insert(self.mainFrame.settingsWidgets, groupCheck)
+
+        local groupLabel = self.mainFrame.settingsGroupLabel
+        if not groupLabel then
+            groupLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsGroupLabel = groupLabel
+        end
+        groupLabel:ClearAllPoints()
+        groupLabel:SetPoint("LEFT", groupCheck, "RIGHT", 4, 0)
+        groupLabel:SetText("Show in party/raid")
+        groupLabel:SetTextColor(unpack(COLORS.textNormal))
+        groupLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, groupLabel)
+
+        yOffset = yOffset - 34
+
+        -- Window transparency slider
+        local opacityLabel = self.mainFrame.settingsOpacityLabel
+        if not opacityLabel then
+            opacityLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsOpacityLabel = opacityLabel
+        end
+        opacityLabel:ClearAllPoints()
+        opacityLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        opacityLabel:SetTextColor(unpack(COLORS.textNormal))
+        opacityLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, opacityLabel)
+
+        local currentOpacity = self.db.settings.trackerOpacity or 100
+        opacityLabel:SetText("Tracker transparency: " .. currentOpacity .. "%")
+
+        yOffset = yOffset - 20
+
+        local opacitySlider = self.mainFrame.settingsOpacitySlider
+        if not opacitySlider then
+            opacitySlider = CreateFrame("Slider", "PrimalLedgerOpacitySlider", content, "OptionsSliderTemplate")
+            opacitySlider:SetSize(180, 16)
+            opacitySlider:SetMinMaxValues(10, 100)
+            opacitySlider:SetValueStep(5)
+            opacitySlider:SetObeyStepOnDrag(true)
+            self.mainFrame.settingsOpacitySlider = opacitySlider
+
+            -- Hide the default template text
+            opacitySlider.Low = opacitySlider.Low or _G[opacitySlider:GetName() .. "Low"]
+            opacitySlider.High = opacitySlider.High or _G[opacitySlider:GetName() .. "High"]
+            opacitySlider.Text = opacitySlider.Text or _G[opacitySlider:GetName() .. "Text"]
+            if opacitySlider.Low then opacitySlider.Low:SetText("10%") opacitySlider.Low:SetTextColor(unpack(COLORS.textDim)) end
+            if opacitySlider.High then opacitySlider.High:SetText("100%") opacitySlider.High:SetTextColor(unpack(COLORS.textDim)) end
+            if opacitySlider.Text then opacitySlider.Text:SetText("") end
+        end
+        opacitySlider:ClearAllPoints()
+        opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        opacitySlider:SetValue(currentOpacity)
+        opacitySlider:SetScript("OnValueChanged", function(self, value)
+            value = math.floor(value + 0.5)
+            PL.db.settings.trackerOpacity = value
+            opacityLabel:SetText("Tracker transparency: " .. value .. "%")
+            PL:ApplyTrackerAlpha()
+        end)
+        opacitySlider:Show()
+        table.insert(self.mainFrame.settingsWidgets, opacitySlider)
+
+        yOffset = yOffset - 36
 
         -- Reset Data button
         local resetBtn = self.mainFrame.settingsResetBtn
@@ -1263,6 +1318,7 @@ function PL:CreateTrackerWindow()
     })
     frame:SetBackdropColor(0.08, 0.05, 0.03, 0.70)
     frame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70)
+    frame:SetAlpha(self:GetTrackerAlpha())
 
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1270,7 +1326,7 @@ function PL:CreateTrackerWindow()
     title:SetText("Primal Ledger")
     title:SetTextColor(unpack(COLORS.accent))
 
-    -- Close button
+    -- Close button (top-right, hidden when locked)
     local closeBtn = CreateFrame("Button", nil, frame)
     closeBtn:SetSize(12, 12)
     closeBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -TRACKER_PADDING + 2, -TRACKER_PADDING + 2)
@@ -1287,8 +1343,61 @@ function PL:CreateTrackerWindow()
         PL.trackerManuallyHidden = true
     end)
 
-    -- Store rows for reuse
+    frame.closeBtn = closeBtn
+
+    -- Lock/Unlock button (bottom-right, shown on hover)
+    local lockBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
+    lockBtn:SetSize(46, 16)
+    lockBtn:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -2, 0)
+    lockBtn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 }
+    })
+    lockBtn:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 0.9)
+    lockBtn:SetBackdropBorderColor(unpack(COLORS.border))
+
+    local lockIcon = lockBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lockIcon:SetPoint("CENTER", 0, 0)
+    lockBtn.icon = lockIcon
+
+    lockBtn:SetScript("OnEnter", function(self)
+        self:SetBackdropBorderColor(unpack(COLORS.accent))
+    end)
+    lockBtn:SetScript("OnLeave", function(self)
+        self:SetBackdropBorderColor(unpack(COLORS.border))
+    end)
+    lockBtn:SetScript("OnClick", function()
+        PL.db.settings.trackerLocked = not (PL.db.settings.trackerLocked == true)
+        PL:ApplyTrackerLock()
+    end)
+    lockBtn:Hide()
+
+    frame.lockBtn = lockBtn
+
+    -- Hover detection for showing lock button
+    local function IsMouseOverTracker()
+        return frame:IsMouseOver() or lockBtn:IsMouseOver()
+    end
+
+    frame:SetScript("OnEnter", function()
+        frame.lockBtn:Show()
+    end)
+    frame:SetScript("OnLeave", function()
+        if not IsMouseOverTracker() then
+            frame.lockBtn:Hide()
+        end
+    end)
+    lockBtn:HookScript("OnLeave", function()
+        if not IsMouseOverTracker() then
+            frame.lockBtn:Hide()
+        end
+    end)
+
+    -- Store elements for reuse
     frame.rows = {}
+    frame.separators = {}
     frame.title = title
     frame.padding = TRACKER_PADDING
     frame.rowHeight = TRACKER_ROW_HEIGHT
@@ -1303,7 +1412,7 @@ function PL:CreateTrackerWindow()
         frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -200)
     end
 
-    -- Update cooldown text every second
+    -- Update cooldown text every second and handle hover hide
     frame:SetScript("OnUpdate", function(f, elapsed)
         f.elapsed = (f.elapsed or 0) + elapsed
         if f.elapsed < 1 then return end
@@ -1311,15 +1420,48 @@ function PL:CreateTrackerWindow()
         PL:UpdateTrackerWindow()
     end)
 
+    self:ApplyTrackerLock()
     self:UpdateTrackerWindow()
+end
+
+function PL:ApplyTrackerLock()
+    if not self.trackerFrame then return end
+    local locked = self.db.settings.trackerLocked == true
+    local frame = self.trackerFrame
+
+    frame:SetMovable(not locked)
+    frame:EnableMouse(true) -- always enabled for hover detection
+
+    if locked then
+        frame:RegisterForDrag()
+        frame.closeBtn:Hide()
+        frame.lockBtn.icon:SetText("|cffddcc99Unlock|r")
+        frame.lockBtn:SetSize(46, 16)
+    else
+        frame:RegisterForDrag("LeftButton")
+        frame.closeBtn:Show()
+        frame.lockBtn.icon:SetText("|cff33cc33Lock|r")
+        frame.lockBtn:SetSize(36, 16)
+    end
 end
 
 function PL:UpdateTrackerWindow()
     if not self.trackerFrame then return end
     local frame = self.trackerFrame
 
-    local TRACKER_PADDING = frame.padding
-    local TRACKER_ROW_HEIGHT = frame.rowHeight
+    local PAD = frame.padding
+    local ROW_H = frame.rowHeight
+    local COL_GAP = 8  -- gap between columns
+
+    -- Hide all existing elements
+    for _, row in ipairs(frame.rows) do
+        if row.charText then row.charText:Hide() end
+        if row.craftText then row.craftText:Hide() end
+        if row.cdText then row.cdText:Hide() end
+    end
+    for _, sep in ipairs(frame.separators) do
+        sep:Hide()
+    end
 
     -- Gather all cooldowns across all characters
     local entries = {}
@@ -1339,40 +1481,34 @@ function PL:UpdateTrackerWindow()
         end
     end
 
-    -- Hide all existing rows
-    for _, row in ipairs(frame.rows) do
-        row:Hide()
-    end
-
     if #entries == 0 then
-        frame:SetSize(160, TRACKER_PADDING * 2 + 14)
-        -- Show "No tracked cooldowns" message
+        frame:SetSize(160, PAD * 2 + 14)
         local row = frame.rows[1]
         if not row then
-            row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            row = { charText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") }
             frame.rows[1] = row
         end
-        row:ClearAllPoints()
-        row:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, -(TRACKER_PADDING + 16))
-        row:SetText("|cff" .. "998877" .. "No tracked cooldowns|r")
-        row:Show()
+        row.charText:ClearAllPoints()
+        row.charText:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -(PAD + 16))
+        row.charText:SetText("|cff998877No tracked cooldowns|r")
+        row.charText:Show()
         return
     end
 
-    -- Build display rows
-    local maxTextWidth = 0
-    local contentTop = -(TRACKER_PADDING + 16)
+    -- Measure column widths
+    local colCharW, colCraftW, colCdW = 0, 0, 0
 
+    -- Pre-compute display data and measure
     for i, entry in ipairs(entries) do
         local row = frame.rows[i]
         if not row then
-            row = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            row = {
+                charText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
+                craftText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
+                cdText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
+            }
             frame.rows[i] = row
         end
-
-        row:ClearAllPoints()
-        local yOffset = contentTop - ((i - 1) * TRACKER_ROW_HEIGHT)
-        row:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, yOffset)
 
         local classColor = CLASS_COLORS[entry.charClass] or { r = 1, g = 1, b = 1 }
         local colorCode = string.format("|cff%02x%02x%02x",
@@ -1380,28 +1516,96 @@ function PL:UpdateTrackerWindow()
             math.floor(classColor.g * 255),
             math.floor(classColor.b * 255))
 
-        local timeText
+        row.charText:SetText(colorCode .. entry.charName .. "|r")
+
+        row.craftText:SetText("|cff" .. "d9c6a5" .. entry.craftName .. "|r")
+
         if entry.remaining == nil then
-            timeText = "|cff998877Unknown|r"
+            row.cdText:SetText("|cff998877Unknown|r")
         elseif entry.remaining <= 0 then
-            timeText = "|cff33cc33Available|r"
+            row.cdText:SetText("|cff33cc33Ready!|r")
         else
-            timeText = "|cffddcc99" .. self:FormatTimeRemaining(entry.remaining) .. "|r"
+            row.cdText:SetText("|cffddcc99" .. self:FormatTimeRemaining(entry.remaining) .. "|r")
         end
 
-        row:SetText(colorCode .. entry.charName .. "|r |cff664d32-|r " .. entry.craftName .. ": " .. timeText)
-        row:Show()
-
-        local textWidth = row:GetStringWidth()
-        if textWidth > maxTextWidth then
-            maxTextWidth = textWidth
-        end
+        local cw = row.charText:GetStringWidth()
+        local fw = row.craftText:GetStringWidth()
+        local dw = row.cdText:GetStringWidth()
+        if cw > colCharW then colCharW = cw end
+        if fw > colCraftW then colCraftW = fw end
+        if dw > colCdW then colCdW = dw end
     end
 
-    -- Size the frame to fit content
-    local frameWidth = maxTextWidth + (TRACKER_PADDING * 2) + 4
-    local frameHeight = TRACKER_PADDING + 16 + (#entries * TRACKER_ROW_HEIGHT) + TRACKER_PADDING
-    frame:SetSize(math.max(frameWidth, 160), frameHeight)
+    -- Layout
+    local totalWidth = PAD + colCharW + COL_GAP + colCraftW + COL_GAP + colCdW + PAD
+    totalWidth = math.max(totalWidth, 160)
+
+    local col1X = PAD
+    local col2X = PAD + colCharW + COL_GAP
+    local col3X = PAD + colCharW + COL_GAP + colCraftW + COL_GAP
+
+    -- Helper to get or create a separator texture
+    local sepIdx = 0
+    local function GetSeparator()
+        sepIdx = sepIdx + 1
+        local sep = frame.separators[sepIdx]
+        if not sep then
+            sep = frame:CreateTexture(nil, "ARTWORK")
+            sep:SetTexture("Interface\\Buttons\\WHITE8x8")
+            frame.separators[sepIdx] = sep
+        end
+        sep:ClearAllPoints()
+        return sep
+    end
+
+    local yOffset = -(PAD + 16)
+
+    -- Top bold separator (header line)
+    local topSep = GetSeparator()
+    topSep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
+    topSep:SetSize(totalWidth - PAD * 2, 1)
+    topSep:SetColorTexture(unpack(COLORS.separator))
+    topSep:SetAlpha(1)
+    topSep:Show()
+    yOffset = yOffset - 4
+
+    -- Draw rows with separators
+    for i, entry in ipairs(entries) do
+        local row = frame.rows[i]
+
+        row.charText:ClearAllPoints()
+        row.charText:SetPoint("TOPLEFT", frame, "TOPLEFT", col1X, yOffset)
+        row.charText:Show()
+
+        row.craftText:ClearAllPoints()
+        row.craftText:SetPoint("TOPLEFT", frame, "TOPLEFT", col2X, yOffset)
+        row.craftText:Show()
+
+        row.cdText:ClearAllPoints()
+        row.cdText:SetPoint("TOPRIGHT", frame, "TOPLEFT", totalWidth - PAD, yOffset)
+        row.cdText:Show()
+
+        yOffset = yOffset - ROW_H
+
+        -- Separator after this row
+        local nextEntry = entries[i + 1]
+        local sep = GetSeparator()
+        sep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
+        sep:SetSize(totalWidth - PAD * 2, 1)
+
+        if nextEntry and nextEntry.charName == entry.charName then
+            -- Dashed/striped line between same character rows
+            sep:SetColorTexture(COLORS.separatorFaint[1], COLORS.separatorFaint[2], COLORS.separatorFaint[3], 0.4)
+        else
+            -- Bold line between different characters (or last row)
+            sep:SetColorTexture(unpack(COLORS.separator))
+        end
+        sep:Show()
+        yOffset = yOffset - 4
+    end
+
+    local frameHeight = math.abs(yOffset) + PAD
+    frame:SetSize(totalWidth, frameHeight)
 end
 
 function PL:ShowTrackerWindow()
@@ -1421,9 +1625,10 @@ function PL:ShouldTrackerBeVisible()
     if self.db.settings.showTrackerWindow == false then return false end
     if self.trackerManuallyHidden then return false end
 
-    local mode = self.db.settings.trackerMode or "static"
-    if mode == "conditional" then
+    if self.db.settings.trackerShowInCombat == false then
         if InCombatLockdown() then return false end
+    end
+    if self.db.settings.trackerShowInGroup == false then
         local groupCount = (GetNumGroupMembers or GetNumRaidMembers or function() return 0 end)()
         local partyCount = (GetNumSubgroupMembers or GetNumPartyMembers or function() return 0 end)()
         if groupCount > 0 or partyCount > 0 then return false end
@@ -1644,6 +1849,25 @@ end
 
 -- Gather crafts from the currently open profession window
 -- Returns: professionName, list of { index, name, header (string or nil) }
+function PL:GetRecipeRequiredLevel(link)
+    if not link then return nil end
+    if not self.scanTooltip then
+        self.scanTooltip = CreateFrame("GameTooltip", "PrimalLedgerScanTooltip", nil, "GameTooltipTemplate")
+        self.scanTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+    end
+    local tip = self.scanTooltip
+    tip:ClearLines()
+    tip:SetHyperlink(link)
+    for i = 1, tip:NumLines() do
+        local text = _G["PrimalLedgerScanTooltipTextLeft" .. i]:GetText()
+        if text then
+            local level = text:match("Requires.-%((%d+)%)")
+            if level then return tonumber(level) end
+        end
+    end
+    return nil
+end
+
 function PL:GetOpenProfessionCrafts(source)
     local crafts = {}
 
@@ -1660,7 +1884,9 @@ function PL:GetOpenProfessionCrafts(source)
                 if craftType == "header" then
                     currentHeader = name
                 elseif craftType ~= "subheader" then
-                    table.insert(crafts, { index = i, name = name, header = currentHeader })
+                    local link = GetCraftRecipeLink(i)
+                    local reqLevel = self:GetRecipeRequiredLevel(link)
+                    table.insert(crafts, { index = i, name = name, header = currentHeader, requiredLevel = reqLevel })
                 end
             end
         end
@@ -1678,7 +1904,9 @@ function PL:GetOpenProfessionCrafts(source)
                 if skillType == "header" then
                     currentHeader = name
                 elseif skillType ~= "subheader" then
-                    table.insert(crafts, { index = i, name = name, header = currentHeader })
+                    local link = GetTradeSkillRecipeLink(i)
+                    local reqLevel = self:GetRecipeRequiredLevel(link)
+                    table.insert(crafts, { index = i, name = name, header = currentHeader, requiredLevel = reqLevel })
                 end
             end
         end
@@ -1757,6 +1985,39 @@ function PL:ShowExportSelectionWindow(source)
 
         frame.scrollFrame = scrollFrame
         frame.content = content
+
+        -- Select 300+ button (bottom-left, static)
+        local sel300Btn = CreateFrame("Button", nil, frame, "BackdropTemplate")
+        sel300Btn:SetSize(100, 24)
+        sel300Btn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", EXP_PADDING, EXP_PADDING)
+        sel300Btn:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
+        })
+        sel300Btn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+        sel300Btn:SetBackdropBorderColor(unpack(COLORS.border))
+
+        local sel300Text = sel300Btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        sel300Text:SetPoint("CENTER", 0, 0)
+        sel300Text:SetText("Select 300+")
+        sel300Text:SetTextColor(unpack(COLORS.textNormal))
+
+        sel300Btn:SetScript("OnEnter", function(self)
+            self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 0.9)
+            sel300Text:SetTextColor(unpack(COLORS.accentHover))
+        end)
+        sel300Btn:SetScript("OnLeave", function(self)
+            self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+            sel300Text:SetTextColor(unpack(COLORS.textNormal))
+        end)
+        sel300Btn:SetScript("OnClick", function()
+            if not frame.craftCheckboxes then return end
+            for _, entry in ipairs(frame.craftCheckboxes) do
+                entry.cb:SetChecked(entry.requiredLevel and entry.requiredLevel >= 300)
+            end
+        end)
 
         -- Export button (bottom-right, static)
         local exportBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
@@ -1838,7 +2099,7 @@ function PL:ShowExportSelectionWindow(source)
         label:Show()
         table.insert(frame.widgets, label)
 
-        table.insert(frame.craftCheckboxes, { cb = cb, name = craft.name, header = craft.header })
+        table.insert(frame.craftCheckboxes, { cb = cb, name = craft.name, header = craft.header, requiredLevel = craft.requiredLevel })
 
         yOffset = yOffset - 24
     end
