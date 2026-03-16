@@ -7,7 +7,6 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
 - **Account-wide tracking** - Track cooldowns across all your characters
 - **Auto-detection** - Automatically detects professions and known crafts
 - **Minimap button** - Click to toggle the cooldown window
-- **Keybinding support** - Set a custom keybind in Key Bindings > AddOns > Primal Ledger
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe
 - **Login notifications** - See all ready cooldowns across your characters when you log in
@@ -53,9 +52,8 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy and Tailoring cool
 
 ## Usage
 
-- **Open the window**: Click the minimap button, type `/pl`, or use your keybind
-- **Set a keybind**: ESC > Key Bindings > AddOns > Primal Ledger
-- **Close the window**: Click the X button, press Escape, or use your keybind
+- **Open the window**: Click the minimap button or type `/pl`
+- **Close the window**: Click the X button or press Escape
 - **Update cooldowns**: Open your profession window (Alchemy/Tailoring) to sync cooldown data
 - **Quick craft**:
   - **Left-click** "Ready!" to open the profession window and select the recipe

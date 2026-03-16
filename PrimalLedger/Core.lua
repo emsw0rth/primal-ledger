@@ -3,11 +3,8 @@
 
 local addonName, PL = ...
 
--- Keybinding localization
-BINDING_HEADER_PRIMALLEDGER = "Primal Ledger"
-
 -- Addon namespace
-PL.version = "1.6.0"
+PL.version = "1.6.1"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 

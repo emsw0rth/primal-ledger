@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.6.1
+
+### Removed
+- **Keybinding support** - Removed custom keybind feature (use the minimap button or `/pl` to toggle the window)
+
+### Fixed
+- Fixed Bindings.xml causing "Unrecognized XML: Binding" errors on load
+
+---
+
 ## v1.6.0
 
 ### New Features
@@ -78,7 +88,6 @@
 ## v1.1.0
 
 ### New Features
-- **Keybinding Support** - Set a custom keybind to toggle the window (Key Bindings > AddOns > Primal Ledger)
 - **ESC to Close** - Press Escape to close the Primal Ledger window
 
 ### Improvements
