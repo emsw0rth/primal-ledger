@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.9.0
+
+### New Features
+- **Resizable tracker window** - Drag the bottom-right grip to resize; size is saved between sessions
+  - Content width follows the window width; minimum width matches the content's natural size
+  - Hidden when the tracker is locked
+- **Alchemy & leatherworking sources** - Sources tab now includes vendor/trainer info and TomTom waypoints for all vendor-sold alchemy transmute recipes (Primal Might, Air to Fire, Earth to Water, Water to Air, Earthstorm Diamond, Skyfire Diamond)
+- **New tracked cooldown** - Transmute: Primal Water to Air
+- **Credits section** - Guild and contributor credits added to Settings
+
+### Fixes
+- **Tracker transparency** - Opacity slider now only affects the background; text remains fully readable at all transparency levels
+- **Combat + group visibility** - "Show in combat" now correctly hides the tracker in combat even when "Show in party/raid" is checked
+- **Default tracker position** - New installs center the tracker on screen instead of near the minimap
+- **Last row separator removed** - No more stray horizontal line below the last cooldown entry
+
+---
+
 ## v1.8.0
 
 ### New Features

@@ -21,6 +21,7 @@ PL.COOLDOWNS = {
     [28566] = { name = "Transmute: Primal Air to Fire", type = "transmutePrimalAirToFire", duration = 72000 }, -- 20 hours
     [28581] = { name = "Transmute: Primal Water to Shadow", type = "transmutePrimalWaterToShadow", duration = 72000 }, -- 20 hours
     [28567] = { name = "Transmute: Primal Earth to Water", type = "transmutePrimalEarthToWater", duration = 72000 }, -- 20 hours
+    [28569] = { name = "Transmute: Primal Water to Air", type = "transmutePrimalWaterToAir", duration = 72000 }, -- 20 hours
     [32765] = { name = "Transmute: Earthstorm Diamond", type = "transmuteEarthstormDiamond", duration = 72000 }, -- 20 hours
     [32766] = { name = "Transmute: Skyfire Diamond", type = "transmuteSkyfireDiamond", duration = 72000 }, -- 20 hours
     [17561] = { name = "Transmute: Undeath to Water", type = "transmuteUndeathToWater", duration = 86400 }, -- 24 hours
@@ -55,7 +56,7 @@ end
 PL.PROFESSION_COOLDOWNS = {
     tailoring = { "shadowcloth", "primalMooncloth", "spellcloth" },
     leatherworking = { "saltShaker" },
-    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
+    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
 }
 
 -- Friendly names for cooldown types
@@ -73,6 +74,7 @@ PL.COOLDOWN_NAMES = {
     transmutePrimalAirToFire = "Transmute: Primal Air to Fire",
     transmutePrimalWaterToShadow = "Transmute: Primal Water to Shadow",
     transmutePrimalEarthToWater = "Transmute: Primal Earth to Water",
+    transmutePrimalWaterToAir = "Transmute: Primal Water to Air",
     transmuteEarthstormDiamond = "Transmute: Earthstorm Diamond",
     transmuteSkyfireDiamond = "Transmute: Skyfire Diamond"
 }
@@ -92,6 +94,7 @@ PL.COOLDOWN_SPELLS = {
     transmutePrimalAirToFire = 28566,
     transmutePrimalWaterToShadow = 28581,
     transmutePrimalEarthToWater = 28567,
+    transmutePrimalWaterToAir = 28569,
     transmuteEarthstormDiamond = 32765,
     transmuteSkyfireDiamond = 32766
 }
@@ -111,6 +114,7 @@ PL.COOLDOWN_DURATIONS = {
     transmutePrimalAirToFire = 72000,
     transmutePrimalWaterToShadow = 72000,
     transmutePrimalEarthToWater = 72000,
+    transmutePrimalWaterToAir = 72000,
     transmuteEarthstormDiamond = 72000,
     transmuteSkyfireDiamond = 72000
 }
@@ -118,6 +122,7 @@ PL.COOLDOWN_DURATIONS = {
 -- Source information for cooldown crafts
 -- Format: cooldownType = { spellId, skillRequired, pattern = { itemId, name }, vendor = { npcId, name, tomtom } }
 PL.COOLDOWN_SOURCES = {
+    -- Tailoring
     primalMooncloth = {
         spellId = 26751,
         skillRequired = 350,
@@ -135,7 +140,46 @@ PL.COOLDOWN_SOURCES = {
         skillRequired = 350,
         pattern = { itemId = 24316, name = "Pattern: Spellcloth" },
         vendor = { npcId = 22213, name = "Gidge Spellweaver", tomtom = "/way #1955 66.6 68.6 Gidge Spellweaver" }
-    }
+    },
+
+    -- Alchemy (vendor-sold recipes)
+    primalMight = {
+        spellId = 29688,
+        skillRequired = 350,
+        pattern = { itemId = 23574, name = "Recipe: Transmute Primal Might" },
+        vendor = { npcId = 19074, name = "Skreah", tomtom = "/way #1955 45.4 19.0 Skreah" }
+    },
+    transmutePrimalAirToFire = {
+        spellId = 28566,
+        skillRequired = 350,
+        pattern = { itemId = 22915, name = "Recipe: Transmute Primal Air to Fire" },
+        vendor = { npcId = 21432, name = "Almaador", tomtom = "/way #1955 51.2 41.4 Almaador" }
+    },
+    transmutePrimalEarthToWater = {
+        spellId = 28567,
+        skillRequired = 350,
+        pattern = { itemId = 22916, name = "Recipe: Transmute Primal Earth to Water" },
+        vendor = { npcId = 18382, name = "Mycah", tomtom = "/way #1946 17.8 51.2 Mycah" }
+    },
+    transmutePrimalWaterToAir = {
+        spellId = 28569,
+        skillRequired = 350,
+        pattern = { itemId = 22918, name = "Recipe: Transmute Primal Water to Air" },
+        vendor = { npcId = 17904, name = "Fedryen Swiftspear", tomtom = "/way #1946 79.2 63.8 Fedryen Swiftspear" }
+    },
+    transmuteEarthstormDiamond = {
+        spellId = 32765,
+        skillRequired = 350,
+        pattern = { itemId = 25869, name = "Recipe: Transmute Earthstorm Diamond" },
+        vendor = { npcId = 17904, name = "Fedryen Swiftspear", tomtom = "/way #1946 79.2 63.8 Fedryen Swiftspear" }
+    },
+    transmuteSkyfireDiamond = {
+        spellId = 32766,
+        skillRequired = 350,
+        pattern = { itemId = 25870, name = "Recipe: Transmute Skyfire Diamond" },
+        vendor = { npcId = 17657, name = "Logistics Officer Ulrike", tomtom = "/way #1944 56.6 62.4 Logistics Officer Ulrike" },
+        vendorHorde = { npcId = 17585, name = "Quartermaster Urgronn", tomtom = "/way #1944 54.9 37.9 Quartermaster Urgronn" }
+    },
 }
 
 -- Profession spell names (for opening the tradeskill window)
@@ -160,6 +204,7 @@ PL.COOLDOWN_TO_PROFESSION = {
     transmutePrimalAirToFire = "alchemy",
     transmutePrimalWaterToShadow = "alchemy",
     transmutePrimalEarthToWater = "alchemy",
+    transmutePrimalWaterToAir = "alchemy",
     transmuteEarthstormDiamond = "alchemy",
     transmuteSkyfireDiamond = "alchemy"
 }

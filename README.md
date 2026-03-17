@@ -9,13 +9,13 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 - **Minimap button** - Click to toggle the cooldown window
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe
-- **Cooldown tracker window** - Semi-transparent overlay with live countdowns in a table layout, draggable with saved position
-- **Tracker transparency** - Adjustable opacity slider for the tracker window
-- **Lock/Unlock tracker** - Hover to reveal a lock button; locked tracker hides the close button and prevents dragging
+- **Cooldown tracker window** - Semi-transparent overlay with live countdowns in a table layout, draggable and resizable with saved position/size
+- **Tracker transparency** - Adjustable opacity slider for the tracker window (background only, text stays readable)
+- **Lock/Unlock tracker** - Hover to reveal a lock button; locked tracker hides the close button, resize grip, and prevents dragging
 - **Tracker visibility options** - Independently toggle visibility in combat and in party/raid
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
-- **Sources tab** - View pattern sources with clickable item links, vendor targeting, and TomTom waypoints
+- **Sources tab** - View recipe/pattern sources with clickable item links, vendor targeting, and TomTom waypoints for tailoring and alchemy cooldowns
 - **Settings tab** - Toggle tracker window, select display mode, reset all data, open CD Tracking
 - **CD Tracking** - Enable or disable tracking for individual cooldown crafts (standalone window from Settings)
 - **Craft export** - Export your recipe list from any profession window, with per-craft selection, formatted for Discord
@@ -47,6 +47,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 | Transmute: Primal Air to Fire | 20 hours |
 | Transmute: Primal Water to Shadow | 20 hours |
 | Transmute: Primal Earth to Water | 20 hours |
+| Transmute: Primal Water to Air | 20 hours |
 | Transmute: Earthstorm Diamond | 20 hours |
 | Transmute: Skyfire Diamond | 20 hours |
 
@@ -68,7 +69,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
   - **Left-click** "Ready!" to open the profession window and select the recipe
   - **Right-click** "Ready!" to select the recipe in an already-open profession window
 - **Sources tab**:
-  - View where to obtain patterns for tailoring cooldown crafts
+  - View where to obtain patterns/recipes for tailoring and alchemy cooldown crafts
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)
@@ -118,10 +119,12 @@ Release zips are saved to the `releases/` folder.
 
 ## Credits
 
+Developed by members of **From the Ashes** on Thunderstrike EU.
+
 | Name | Contributions |
 |------|---------------|
-| **Emsworth** | Ideation, Testing, Development |
-| **Mysticas** | Ideation, Testing |
+| **Emsworth (Mehndi)** | Ideation, Development, Testing |
+| **Mysticas (Mystibloom)** | Ideation, Testing |
 
 ## License
 

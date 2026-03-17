@@ -85,10 +85,12 @@ function PL:GetTrackerAlpha()
     return pct / 100
 end
 
--- Apply transparency to the tracker window
+-- Apply transparency to the tracker window (background only, not text)
 function PL:ApplyTrackerAlpha()
     if self.trackerFrame then
-        self.trackerFrame:SetAlpha(self:GetTrackerAlpha())
+        local alpha = self:GetTrackerAlpha()
+        self.trackerFrame:SetBackdropColor(0.08, 0.05, 0.03, 0.70 * alpha)
+        self.trackerFrame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70 * alpha)
     end
 end
 
@@ -843,7 +845,13 @@ function PL:UpdateMainFrame()
     -- SOURCES TAB: Show craft source information
     elseif selectedTab == 3 then
         local sources = self.COOLDOWN_SOURCES or {}
-        local sourceOrder = { "primalMooncloth", "shadowcloth", "spellcloth" }
+        local sourceOrder = {
+            "primalMooncloth", "shadowcloth", "spellcloth",
+            "primalMight",
+            "transmutePrimalAirToFire", "transmutePrimalEarthToWater",
+            "transmutePrimalWaterToAir",
+            "transmuteEarthstormDiamond", "transmuteSkyfireDiamond",
+        }
 
         for _, cdType in ipairs(sourceOrder) do
             local source = sources[cdType]
@@ -1254,8 +1262,56 @@ function PL:UpdateMainFrame()
         trackingBtn:Show()
         table.insert(self.mainFrame.settingsWidgets, trackingBtn)
 
+        yOffset = yOffset - 40
+
+        -- Guild and credits section
+        local guildLabel = self.mainFrame.settingsGuildLabel
+        if not guildLabel then
+            guildLabel = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightExtraSmall")
+            self.mainFrame.settingsGuildLabel = guildLabel
+        end
+        guildLabel:ClearAllPoints()
+        guildLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        guildLabel:SetTextColor(unpack(COLORS.textDim))
+        guildLabel:SetText('Developed by members of "From the Ashes" on Thunderstrike EU.')
+        guildLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, guildLabel)
+
+        yOffset = yOffset - 16
+
+        local creditsCols = {
+            { "Emsworth (Mehndi)", "Ideation, Development, Testing" },
+            { "Mysticas (Mystibloom)", "Ideation, Testing" },
+        }
+        if not self.mainFrame.creditsRows then self.mainFrame.creditsRows = {} end
+        for i, entry in ipairs(creditsCols) do
+            local row = self.mainFrame.creditsRows[i]
+            if not row then
+                row = {
+                    name = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
+                    role = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
+                }
+                self.mainFrame.creditsRows[i] = row
+            end
+            row.name:ClearAllPoints()
+            row.name:SetPoint("TOPLEFT", content, "TOPLEFT", 4, yOffset)
+            row.name:SetTextColor(unpack(COLORS.textDim))
+            row.name:SetText(entry[1])
+            row.name:Show()
+            table.insert(self.mainFrame.settingsWidgets, row.name)
+
+            row.role:ClearAllPoints()
+            row.role:SetPoint("TOPLEFT", content, "TOPLEFT", 120, yOffset)
+            row.role:SetTextColor(unpack(COLORS.textFaint))
+            row.role:SetText(entry[2])
+            row.role:Show()
+            table.insert(self.mainFrame.settingsWidgets, row.role)
+
+            yOffset = yOffset - 14
+        end
+
         -- Content height for settings
-        content:SetHeight(math.abs(yOffset) + 40)
+        content:SetHeight(math.abs(yOffset) + 10)
     end
 
     -- Update content height
@@ -1309,6 +1365,7 @@ function PL:CreateTrackerWindow()
         local point, _, _, x, y = f:GetPoint()
         PL.db.settings.trackerPosition = { point = point, x = x, y = y }
     end)
+    frame:SetResizable(true)
 
     frame:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -1316,9 +1373,9 @@ function PL:CreateTrackerWindow()
         edgeSize = 1,
         insets = { left = 1, right = 1, top = 1, bottom = 1 }
     })
-    frame:SetBackdropColor(0.08, 0.05, 0.03, 0.70)
-    frame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70)
-    frame:SetAlpha(self:GetTrackerAlpha())
+    local trackerAlpha = self:GetTrackerAlpha()
+    frame:SetBackdropColor(0.08, 0.05, 0.03, 0.70 * trackerAlpha)
+    frame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70 * trackerAlpha)
 
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1345,8 +1402,11 @@ function PL:CreateTrackerWindow()
 
     frame.closeBtn = closeBtn
 
-    -- Lock/Unlock button (bottom-right, shown on hover)
-    local lockBtn = CreateFrame("Button", nil, frame, "BackdropTemplate")
+    -- Enable clipping so content outside the frame is hidden when resized smaller
+    frame:SetClipsChildren(true)
+
+    -- Lock/Unlock button (bottom-right, shown on hover — parented to UIParent to avoid clipping)
+    local lockBtn = CreateFrame("Button", nil, UIParent, "BackdropTemplate")
     lockBtn:SetSize(46, 16)
     lockBtn:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -2, 0)
     lockBtn:SetBackdrop({
@@ -1376,6 +1436,25 @@ function PL:CreateTrackerWindow()
 
     frame.lockBtn = lockBtn
 
+    -- Resize grip (bottom-right corner)
+    local resizeGrip = CreateFrame("Button", nil, frame)
+    resizeGrip:SetSize(12, 12)
+    resizeGrip:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
+    resizeGrip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    resizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    resizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    resizeGrip:SetScript("OnMouseDown", function()
+        if not (PL.db.settings.trackerLocked == true) then
+            frame:StartSizing("BOTTOMRIGHT")
+        end
+    end)
+    resizeGrip:SetScript("OnMouseUp", function()
+        frame:StopMovingOrSizing()
+        PL.db.settings.trackerSize = { width = frame:GetWidth(), height = frame:GetHeight() }
+        PL:UpdateTrackerWindow()
+    end)
+    frame.resizeGrip = resizeGrip
+
     -- Hover detection for showing lock button
     local function IsMouseOverTracker()
         return frame:IsMouseOver() or lockBtn:IsMouseOver()
@@ -1395,6 +1474,9 @@ function PL:CreateTrackerWindow()
         end
     end)
 
+    -- Keep lock button visibility in sync with tracker frame
+    frame:HookScript("OnHide", function() lockBtn:Hide() end)
+
     -- Store elements for reuse
     frame.rows = {}
     frame.separators = {}
@@ -1404,12 +1486,18 @@ function PL:CreateTrackerWindow()
 
     self.trackerFrame = frame
 
-    -- Restore saved position or default to top-right
+    -- Restore saved position or default to center
     if self.db.settings.trackerPosition then
         local pos = self.db.settings.trackerPosition
         frame:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
     else
-        frame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -200)
+        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
+
+    -- Restore saved size if any
+    if self.db.settings.trackerSize then
+        local size = self.db.settings.trackerSize
+        frame:SetSize(size.width, size.height)
     end
 
     -- Update cooldown text every second and handle hover hide
@@ -1435,11 +1523,13 @@ function PL:ApplyTrackerLock()
     if locked then
         frame:RegisterForDrag()
         frame.closeBtn:Hide()
+        if frame.resizeGrip then frame.resizeGrip:Hide() end
         frame.lockBtn.icon:SetText("|cffddcc99Unlock|r")
         frame.lockBtn:SetSize(46, 16)
     else
         frame:RegisterForDrag("LeftButton")
         frame.closeBtn:Show()
+        if frame.resizeGrip then frame.resizeGrip:Show() end
         frame.lockBtn.icon:SetText("|cff33cc33Lock|r")
         frame.lockBtn:SetSize(36, 16)
     end
@@ -1482,7 +1572,9 @@ function PL:UpdateTrackerWindow()
     end
 
     if #entries == 0 then
-        frame:SetSize(160, PAD * 2 + 14)
+        if not self.db.settings.trackerSize then
+            frame:SetSize(160, PAD * 2 + 14 + 16)
+        end
         local row = frame.rows[1]
         if not row then
             row = { charText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") }
@@ -1542,7 +1634,12 @@ function PL:UpdateTrackerWindow()
 
     local col1X = PAD
     local col2X = PAD + colCharW + COL_GAP
-    local col3X = PAD + colCharW + COL_GAP + colCraftW + COL_GAP
+
+    -- Set minimum resize bounds to fit content width
+    frame:SetResizeBounds(totalWidth, 60)
+
+    -- Use the frame's actual width so content follows window resizing
+    local frameWidth = math.max(frame:GetWidth(), totalWidth)
 
     -- Helper to get or create a separator texture
     local sepIdx = 0
@@ -1563,7 +1660,8 @@ function PL:UpdateTrackerWindow()
     -- Top bold separator (header line)
     local topSep = GetSeparator()
     topSep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
-    topSep:SetSize(totalWidth - PAD * 2, 1)
+    topSep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
+    topSep:SetHeight(1)
     topSep:SetColorTexture(unpack(COLORS.separator))
     topSep:SetAlpha(1)
     topSep:Show()
@@ -1582,30 +1680,36 @@ function PL:UpdateTrackerWindow()
         row.craftText:Show()
 
         row.cdText:ClearAllPoints()
-        row.cdText:SetPoint("TOPRIGHT", frame, "TOPLEFT", totalWidth - PAD, yOffset)
+        row.cdText:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
         row.cdText:Show()
 
         yOffset = yOffset - ROW_H
 
-        -- Separator after this row
+        -- Separator after this row (but not after the last row)
         local nextEntry = entries[i + 1]
-        local sep = GetSeparator()
-        sep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
-        sep:SetSize(totalWidth - PAD * 2, 1)
+        if nextEntry then
+            local sep = GetSeparator()
+            sep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
+            sep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
+            sep:SetHeight(1)
 
-        if nextEntry and nextEntry.charName == entry.charName then
-            -- Dashed/striped line between same character rows
-            sep:SetColorTexture(COLORS.separatorFaint[1], COLORS.separatorFaint[2], COLORS.separatorFaint[3], 0.4)
-        else
-            -- Bold line between different characters (or last row)
-            sep:SetColorTexture(unpack(COLORS.separator))
+            if nextEntry.charName == entry.charName then
+                -- Faint line between same character rows
+                sep:SetColorTexture(COLORS.separatorFaint[1], COLORS.separatorFaint[2], COLORS.separatorFaint[3], 0.4)
+            else
+                -- Bold line between different characters
+                sep:SetColorTexture(unpack(COLORS.separator))
+            end
+            sep:Show()
+            yOffset = yOffset - 4
         end
-        sep:Show()
-        yOffset = yOffset - 4
     end
 
-    local frameHeight = math.abs(yOffset) + PAD
-    frame:SetSize(totalWidth, frameHeight)
+    -- Auto-size the frame if user hasn't manually resized
+    if not self.db.settings.trackerSize then
+        local frameHeight = math.abs(yOffset) + PAD
+        frame:SetSize(totalWidth, frameHeight)
+    end
 end
 
 function PL:ShowTrackerWindow()
@@ -1625,13 +1729,18 @@ function PL:ShouldTrackerBeVisible()
     if self.db.settings.showTrackerWindow == false then return false end
     if self.trackerManuallyHidden then return false end
 
-    if self.db.settings.trackerShowInCombat == false then
-        if InCombatLockdown() then return false end
+    local inCombat = InCombatLockdown()
+    local groupCount = (GetNumGroupMembers or GetNumRaidMembers or function() return 0 end)()
+    local partyCount = (GetNumSubgroupMembers or GetNumPartyMembers or function() return 0 end)()
+    local inGroup = groupCount > 0 or partyCount > 0
+
+    -- Hide in combat if "show in combat" is unchecked (regardless of group setting)
+    if self.db.settings.trackerShowInCombat == false and inCombat then
+        return false
     end
-    if self.db.settings.trackerShowInGroup == false then
-        local groupCount = (GetNumGroupMembers or GetNumRaidMembers or function() return 0 end)()
-        local partyCount = (GetNumSubgroupMembers or GetNumPartyMembers or function() return 0 end)()
-        if groupCount > 0 or partyCount > 0 then return false end
+    -- Hide in group if "show in party/raid" is unchecked
+    if self.db.settings.trackerShowInGroup == false and inGroup then
+        return false
     end
 
     return true
