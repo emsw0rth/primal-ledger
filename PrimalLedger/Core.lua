@@ -4,7 +4,7 @@
 local addonName, PL = ...
 
 -- Addon namespace
-PL.version = "1.9.0"
+PL.version = "1.10.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -18,6 +18,7 @@ eventFrame:RegisterEvent("TRADE_SKILL_UPDATE")
 eventFrame:RegisterEvent("CRAFT_SHOW")
 eventFrame:RegisterEvent("CRAFT_UPDATE")
 eventFrame:RegisterEvent("BAG_UPDATE")
+eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -42,6 +43,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         PL:OnCraftUpdate()
     elseif event == "BAG_UPDATE" then
         PL:OnBagUpdate()
+    elseif event == "SPELL_UPDATE_COOLDOWN" then
+        PL:OnSpellCooldownUpdate()
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED"
         or event == "GROUP_ROSTER_UPDATE" then
         PL:EvaluateTrackerVisibility()
@@ -86,6 +89,13 @@ function PL:OnBagUpdate()
     if not self.playerLoggedIn then return end
     local charKey = self:GetCharacterKey()
     self:DetectItemCooldowns(charKey)
+end
+
+-- Called when any spell cooldown changes (fires after casting, login, etc.)
+function PL:OnSpellCooldownUpdate()
+    if not self.playerLoggedIn then return end
+    local charKey = self:GetCharacterKey()
+    self:PollSpellCooldowns(charKey)
 end
 
 -- Called when craft window (Enchanting) is shown or updated

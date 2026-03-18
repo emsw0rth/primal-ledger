@@ -13,6 +13,7 @@ local defaults = {
         showTrackerWindow = true,
         trackerMode = "static",
         trackerPosition = nil,
+        showSeconds = false,
         disabledCooldowns = {},
     }
 }

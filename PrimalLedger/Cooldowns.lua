@@ -292,6 +292,72 @@ function PL:DetectKnownCrafts(charKey)
 
     -- Detect item-based cooldowns (e.g. Salt Shaker) by scanning bags
     self:DetectItemCooldowns(charKey)
+
+    -- Poll GetSpellCooldown for all known spells to detect active cooldowns
+    self:PollSpellCooldowns(charKey)
+end
+
+-- Poll GetSpellCooldown() for all tracked spells on the current character
+-- This detects active cooldowns without needing to open the profession window,
+-- catching cooldowns that were started before the addon was installed or
+-- that the event system missed.
+function PL:PollSpellCooldowns(charKey)
+    local charData = self.db.characters[charKey]
+    if not charData then return end
+
+    charData.knownCrafts = charData.knownCrafts or {}
+    charData.cooldowns = charData.cooldowns or {}
+
+    for cdType, spellID in pairs(self.COOLDOWN_SPELLS) do
+        -- Skip item-based cooldowns (handled by DetectItemCooldowns via bag scanning)
+        if not self.COOLDOWN_ITEMS[cdType] then
+            local start, duration = GetSpellCooldown(spellID)
+            start = start or 0
+            duration = duration or 0
+
+            -- Filter out short cooldowns (<60s) to ignore GCDs and spell locks
+            if duration > 0 and duration < 60 then
+                -- skip, this is a GCD or spell lock
+            elseif duration > 604800 then
+                -- skip, bogus value (>7 days)
+            else
+                local now = GetTime()
+
+                -- Fix WoW client overflow: start times far in the future
+                if start > now + 2147483.648 then
+                    start = start - 4294967.296
+                end
+
+                if start > 0 and duration > 0 then
+                    -- Spell is on cooldown
+                    local expirationTime = start + duration
+
+                    -- Mark as known if we detected a cooldown
+                    if not charData.knownCrafts[cdType] then
+                        charData.knownCrafts[cdType] = true
+                    end
+
+                    -- Only update if we don't have data, existing data shows ready,
+                    -- or the polled expiration is later (more accurate)
+                    local existing = charData.cooldowns[cdType]
+                    if not existing or existing == 0 or expirationTime > existing then
+                        charData.cooldowns[cdType] = expirationTime
+                    end
+                elseif charData.knownCrafts[cdType] then
+                    -- Spell is known and not on cooldown — mark as ready
+                    -- Only if we don't already have an active cooldown tracked
+                    -- (GetSpellCooldown returns 0 if the player doesn't know the spell)
+                    local existing = charData.cooldowns[cdType]
+                    if not existing then
+                        charData.cooldowns[cdType] = 0
+                    elseif existing > 0 and existing <= now then
+                        -- Existing cooldown has expired, mark ready
+                        charData.cooldowns[cdType] = 0
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- Item IDs for item-based cooldowns
@@ -451,12 +517,24 @@ function PL:FormatTimeRemaining(seconds)
     local days = math.floor(seconds / 86400)
     local hours = math.floor((seconds % 86400) / 3600)
     local minutes = math.floor((seconds % 3600) / 60)
+    local secs = math.floor(seconds % 60)
+
+    local showSecs = self.db and self.db.settings and self.db.settings.showSeconds
 
     if days > 0 then
+        if showSecs then
+            return string.format("%dd %dh %dm %ds", days, hours, minutes, secs)
+        end
         return string.format("%dd %dh %dm", days, hours, minutes)
     elseif hours > 0 then
+        if showSecs then
+            return string.format("%dh %dm %ds", hours, minutes, secs)
+        end
         return string.format("%dh %dm", hours, minutes)
     else
+        if showSecs then
+            return string.format("%dm %ds", minutes, secs)
+        end
         return string.format("%dm", minutes)
     end
 end

@@ -5,7 +5,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 ## Features
 
 - **Account-wide tracking** - Track cooldowns across all your characters
-- **Auto-detection** - Automatically detects professions and known crafts
+- **Auto-detection** - Automatically detects professions, known crafts, and active cooldowns on login via spell polling
 - **Minimap button** - Click to toggle the cooldown window
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe
@@ -16,6 +16,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
 - **Sources tab** - View recipe/pattern sources with clickable item links, vendor targeting, and TomTom waypoints for tailoring and alchemy cooldowns
+- **Show seconds** - Optional setting to display seconds remaining on cooldown timers
 - **Settings tab** - Toggle tracker window, select display mode, reset all data, open CD Tracking
 - **CD Tracking** - Enable or disable tracking for individual cooldown crafts (standalone window from Settings)
 - **Craft export** - Export your recipe list from any profession window, with per-craft selection, formatted for Discord
@@ -73,7 +74,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)
-- **Settings tab**: Toggle tracker window, adjust transparency, configure visibility options, reset all tracked data, open CD Tracking
+- **Settings tab**: Toggle tracker window, show seconds, adjust transparency, configure visibility options, reset all tracked data, open CD Tracking
 - **CD Tracking**: Click "CD Tracking" in Settings to open a window where you can enable/disable individual cooldown crafts
 - **Export crafts**: Open any profession window, click **Export**, select which crafts to include, then export as Discord-formatted text
 

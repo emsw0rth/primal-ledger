@@ -1136,6 +1136,36 @@ function PL:UpdateMainFrame()
         groupLabel:Show()
         table.insert(self.mainFrame.settingsWidgets, groupLabel)
 
+        yOffset = yOffset - 26
+
+        -- Show seconds checkbox (indented)
+        local secondsCheck = self.mainFrame.settingsSecondsCheck
+        if not secondsCheck then
+            secondsCheck = CreateFrame("CheckButton", "PrimalLedgerSecondsCheck", content, "UICheckButtonTemplate")
+            secondsCheck:SetSize(24, 24)
+            self.mainFrame.settingsSecondsCheck = secondsCheck
+        end
+        secondsCheck:ClearAllPoints()
+        secondsCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
+        secondsCheck:SetChecked(self.db.settings.showSeconds == true)
+        secondsCheck:SetScript("OnClick", function(self)
+            PL.db.settings.showSeconds = self:GetChecked()
+        end)
+        secondsCheck:Show()
+        table.insert(self.mainFrame.settingsWidgets, secondsCheck)
+
+        local secondsLabel = self.mainFrame.settingsSecondsLabel
+        if not secondsLabel then
+            secondsLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsSecondsLabel = secondsLabel
+        end
+        secondsLabel:ClearAllPoints()
+        secondsLabel:SetPoint("LEFT", secondsCheck, "RIGHT", 4, 0)
+        secondsLabel:SetText("Show seconds remaining")
+        secondsLabel:SetTextColor(unpack(COLORS.textNormal))
+        secondsLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, secondsLabel)
+
         yOffset = yOffset - 34
 
         -- Window transparency slider

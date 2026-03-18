@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.10.0
+
+### New Features
+- **Automatic cooldown detection via polling** - Cooldowns are now detected on login by polling `GetSpellCooldown()` for all tracked spells, without needing to open the profession window
+  - Catches cooldowns started before the addon was installed or that the event system missed
+  - Listens to `SPELL_UPDATE_COOLDOWN` event for real-time updates
+  - Filters out GCDs and spell locks (ignores durations under 60 seconds)
+  - Includes WoW client overflow fix for start time values
+- **Show seconds setting** - New toggle in Settings to display seconds remaining on cooldown timers (e.g., `2h 15m 30s` instead of `2h 15m`)
+
+---
+
 ## v1.9.0
 
 ### New Features
