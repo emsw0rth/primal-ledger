@@ -1,10 +1,24 @@
 ## Interface: 20505
-## Title: Primal Ledger
-## Notes: Track Tailoring, Leatherworking, and Alchemy cooldowns across all characters
+## Title: |cFF9616F2Primal Ledger
+## Notes: |cff58C6FATrack Tailoring, Leatherworking, and Alchemy cooldowns across all characters
 ## Author: Emsw0rth
-## Version: 1.10.0
+## Version: 1.10.1
 ## IconTexture: Interface\AddOns\PrimalLedger\assets\icon_map
 ## SavedVariables: PrimalLedgerDB
+
+# https://warcraft.wiki.gg/wiki/Addon_Categories
+## Category: Professions
+## Category-deDE: Berufe
+## Category-esES: Profesiones
+## Category-esMX: Profesiones
+## Category-frFR: Métiers
+## Category-itIT: Professioni
+## Category-koKR: 전문 기술
+## Category-ptBR: Profissões
+## Category-ruRU: Профессии
+## Category-zhCN: 专业
+## Category-zhTW: 專業技能
+
 
 Core.lua
 Data.lua

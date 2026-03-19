@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.10.1
+
+### Fixes
+- **Fixed cooldown timers becoming invalid after relog/reload** - Cooldowns are now stored as epoch timestamps (`time()`) instead of session-relative values (`GetTime()`), so they persist correctly across client restarts and UI reloads
+
+---
+
 ## v1.10.0
 
 ### New Features

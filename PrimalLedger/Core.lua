@@ -4,7 +4,7 @@
 local addonName, PL = ...
 
 -- Addon namespace
-PL.version = "1.10.0"
+PL.version = "1.10.1"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 

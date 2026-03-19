@@ -329,8 +329,9 @@ function PL:PollSpellCooldowns(charKey)
                 end
 
                 if start > 0 and duration > 0 then
-                    -- Spell is on cooldown
-                    local expirationTime = start + duration
+                    -- Spell is on cooldown — store as epoch time so it persists across sessions
+                    local remaining = (start + duration) - now
+                    local expirationTime = time() + remaining
 
                     -- Mark as known if we detected a cooldown
                     if not charData.knownCrafts[cdType] then
@@ -350,7 +351,7 @@ function PL:PollSpellCooldowns(charKey)
                     local existing = charData.cooldowns[cdType]
                     if not existing then
                         charData.cooldowns[cdType] = 0
-                    elseif existing > 0 and existing <= now then
+                    elseif existing > 0 and existing <= time() then
                         -- Existing cooldown has expired, mark ready
                         charData.cooldowns[cdType] = 0
                     end
@@ -393,7 +394,7 @@ function PL:DetectItemCooldowns(charKey)
                     if startTime and startTime > 0 and duration > 0 and isEnabled == 1 then
                         local remaining = (startTime + duration) - GetTime()
                         if remaining > 0 then
-                            charData.cooldowns[cdType] = GetTime() + remaining
+                            charData.cooldowns[cdType] = time() + remaining
                         else
                             charData.cooldowns[cdType] = 0
                         end
@@ -455,8 +456,8 @@ function PL:ScanTradeSkillWindow(charKey)
                     -- Get cooldown using GetTradeSkillCooldown (returns seconds remaining)
                     local cooldownRemaining = GetTradeSkillCooldown(i)
                     if cooldownRemaining and cooldownRemaining > 0 then
-                        -- Spell is on cooldown - calculate expiration time
-                        local expirationTime = GetTime() + cooldownRemaining
+                        -- Spell is on cooldown - store as epoch time so it persists across sessions
+                        local expirationTime = time() + cooldownRemaining
                         charData.cooldowns[cdType] = expirationTime
                     else
                         -- Spell is ready
@@ -473,7 +474,7 @@ end
 function PL:CheckCooldownSpell(spellID)
     local cooldownInfo = self.COOLDOWNS[spellID]
     if cooldownInfo then
-        local expirationTime = GetTime() + cooldownInfo.duration
+        local expirationTime = time() + cooldownInfo.duration
         self:SaveCooldown(cooldownInfo.type, expirationTime)
         self:Print(cooldownInfo.name .. " crafted! Cooldown expires in " ..
             self:FormatTimeRemaining(cooldownInfo.duration))
@@ -496,7 +497,7 @@ function PL:GetCooldownRemaining(charKey, cooldownType)
         return 0 -- Ready (synced from game)
     end
 
-    local remaining = expirationTime - GetTime()
+    local remaining = expirationTime - time()
     if remaining <= 0 then
         return 0 -- Ready
     end
