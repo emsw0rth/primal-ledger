@@ -2,7 +2,7 @@
 ## Title: |cFF9616F2Primal Ledger
 ## Notes: |cff58C6FATrack Tailoring, Leatherworking, and Alchemy cooldowns across all characters
 ## Author: Emsw0rth
-## Version: 1.10.1
+## Version: 1.10.3
 ## IconTexture: Interface\AddOns\PrimalLedger\assets\icon_map
 ## SavedVariables: PrimalLedgerDB
 

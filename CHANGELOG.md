@@ -1,8 +1,11 @@
 # Changelog
 
-## v1.10.1
+## v1.10.3
 
 ### Fixes
+- **Fixed wildly incorrect cooldown timers (e.g. 20527 days)** - Added sanity checks to prevent bogus `GetSpellCooldown()` start values from corrupting stored cooldown data, and a runtime guard that auto-resets any stored cooldown exceeding 7 days
+- **Migrated stale cooldown data from v1.10.0** - On startup, any cooldown values still stored in old `GetTime()` format (session-relative) are automatically cleaned up
+- **Fixed shared cooldowns marking all alchemy transmutes as known** - Casting any transmute triggered shared cooldowns on all transmutes, which the polling code interpreted as the character knowing every transmute recipe. Cooldown polling now only updates cooldowns for crafts already detected via the profession window scan
 - **Fixed cooldown timers becoming invalid after relog/reload** - Cooldowns are now stored as epoch timestamps (`time()`) instead of session-relative values (`GetTime()`), so they persist correctly across client restarts and UI reloads
 
 ---

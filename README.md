@@ -5,7 +5,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 ## Features
 
 - **Account-wide tracking** - Track cooldowns across all your characters
-- **Auto-detection** - Automatically detects professions, known crafts, and active cooldowns on login via spell polling
+- **Auto-detection** - Automatically detects professions on login; known crafts are discovered when you open the profession window, and active cooldowns are kept up-to-date via spell polling
 - **Minimap button** - Click to toggle the cooldown window
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window, right-click to select recipe

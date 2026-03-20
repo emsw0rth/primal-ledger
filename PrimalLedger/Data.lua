@@ -39,6 +39,24 @@ function PL:InitializeData()
     end
 
     self.db = PrimalLedgerDB
+
+    -- Migrate: clean up cooldown values stored in old GetTime() format
+    -- or otherwise corrupt. Valid values are either 0 (ready) or an epoch
+    -- timestamp (> 1 billion). GetTime()-based values are much smaller.
+    local now = time()
+    if self.db.characters then
+        for _, charData in pairs(self.db.characters) do
+            if charData.cooldowns then
+                for cdType, value in pairs(charData.cooldowns) do
+                    if type(value) == "number" and value > 0 then
+                        if value < 1000000000 or value > now + 604800 then
+                            charData.cooldowns[cdType] = 0
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- Get character key (CharName-RealmName)

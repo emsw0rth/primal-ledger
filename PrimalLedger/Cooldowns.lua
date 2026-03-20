@@ -282,18 +282,16 @@ function PL:DetectKnownCrafts(charKey)
     charData.knownCrafts = charData.knownCrafts or {}
     charData.cooldowns = charData.cooldowns or {}
 
-    -- Use IsSpellKnown to detect which crafts the character knows
-    -- Only ADD data here, don't remove - removal happens when scanning tradeskill window
-    for cdType, spellID in pairs(self.COOLDOWN_SPELLS) do
-        if IsSpellKnown(spellID) then
-            charData.knownCrafts[cdType] = true
-        end
-    end
+    -- Known crafts are detected by scanning the profession window (ScanTradeSkillWindow)
+    -- and by detecting items in bags (DetectItemCooldowns).
+    -- We do NOT use IsSpellKnown or GetSpellCooldown to mark crafts as known,
+    -- because shared cooldowns (e.g. alchemy transmutes) would incorrectly
+    -- mark all transmutes as known when only one is.
 
     -- Detect item-based cooldowns (e.g. Salt Shaker) by scanning bags
     self:DetectItemCooldowns(charKey)
 
-    -- Poll GetSpellCooldown for all known spells to detect active cooldowns
+    -- Poll GetSpellCooldown for already-known spells to detect active cooldowns
     self:PollSpellCooldowns(charKey)
 end
 
@@ -309,8 +307,9 @@ function PL:PollSpellCooldowns(charKey)
     charData.cooldowns = charData.cooldowns or {}
 
     for cdType, spellID in pairs(self.COOLDOWN_SPELLS) do
-        -- Skip item-based cooldowns (handled by DetectItemCooldowns via bag scanning)
-        if not self.COOLDOWN_ITEMS[cdType] then
+        -- Only poll cooldowns for crafts already known (detected via profession window scan).
+        -- Skip item-based cooldowns (handled by DetectItemCooldowns via bag scanning).
+        if charData.knownCrafts[cdType] and not self.COOLDOWN_ITEMS[cdType] then
             local start, duration = GetSpellCooldown(spellID)
             start = start or 0
             duration = duration or 0
@@ -331,23 +330,22 @@ function PL:PollSpellCooldowns(charKey)
                 if start > 0 and duration > 0 then
                     -- Spell is on cooldown — store as epoch time so it persists across sessions
                     local remaining = (start + duration) - now
-                    local expirationTime = time() + remaining
 
-                    -- Mark as known if we detected a cooldown
-                    if not charData.knownCrafts[cdType] then
-                        charData.knownCrafts[cdType] = true
-                    end
+                    -- Sanity: remaining should not exceed the cooldown's duration
+                    -- (start should always be <= now for active cooldowns).
+                    -- If it does, GetSpellCooldown returned a bogus start value.
+                    if remaining > 0 and remaining <= duration + 1 then
+                        local expirationTime = time() + remaining
 
-                    -- Only update if we don't have data, existing data shows ready,
-                    -- or the polled expiration is later (more accurate)
-                    local existing = charData.cooldowns[cdType]
-                    if not existing or existing == 0 or expirationTime > existing then
-                        charData.cooldowns[cdType] = expirationTime
+                        -- Only update if we don't have data, existing data shows ready,
+                        -- or the polled expiration is later (more accurate)
+                        local existing = charData.cooldowns[cdType]
+                        if not existing or existing == 0 or expirationTime > existing then
+                            charData.cooldowns[cdType] = expirationTime
+                        end
                     end
-                elseif charData.knownCrafts[cdType] then
-                    -- Spell is known and not on cooldown — mark as ready
-                    -- Only if we don't already have an active cooldown tracked
-                    -- (GetSpellCooldown returns 0 if the player doesn't know the spell)
+                else
+                    -- Spell is not on cooldown — mark as ready
                     local existing = charData.cooldowns[cdType]
                     if not existing then
                         charData.cooldowns[cdType] = 0
@@ -500,6 +498,16 @@ function PL:GetCooldownRemaining(charKey, cooldownType)
     local remaining = expirationTime - time()
     if remaining <= 0 then
         return 0 -- Ready
+    end
+
+    -- Sanity: no tracked cooldown should exceed 7 days (604800 seconds).
+    -- If it does, the stored value is corrupt (e.g. old GetTime()-based data).
+    if remaining > 604800 then
+        local charData = self.db.characters[charKey]
+        if charData and charData.cooldowns then
+            charData.cooldowns[cooldownType] = 0
+        end
+        return 0
     end
 
     return remaining
