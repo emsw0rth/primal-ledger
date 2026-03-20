@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.10.3
+## v1.11.0
+
+### New Features
+- **New tracked cooldown** - Transmute: Primal Life to Earth (20 hours, learned via discovery)
+- **Discovery recipe support in Sources tab** - Recipes learned through discovery now show "Learned via Discovery" with a hint to perform other TBC transmutes
 
 ### Fixes
 - **Fixed wildly incorrect cooldown timers (e.g. 20527 days)** - Added sanity checks to prevent bogus `GetSpellCooldown()` start values from corrupting stored cooldown data, and a runtime guard that auto-resets any stored cooldown exceeding 7 days

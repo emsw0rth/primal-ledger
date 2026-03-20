@@ -49,6 +49,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 | Transmute: Primal Water to Shadow | 20 hours |
 | Transmute: Primal Earth to Water | 20 hours |
 | Transmute: Primal Water to Air | 20 hours |
+| Transmute: Primal Life to Earth | 20 hours |
 | Transmute: Earthstorm Diamond | 20 hours |
 | Transmute: Skyfire Diamond | 20 hours |
 

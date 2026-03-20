@@ -22,6 +22,7 @@ PL.COOLDOWNS = {
     [28581] = { name = "Transmute: Primal Water to Shadow", type = "transmutePrimalWaterToShadow", duration = 72000 }, -- 20 hours
     [28567] = { name = "Transmute: Primal Earth to Water", type = "transmutePrimalEarthToWater", duration = 72000 }, -- 20 hours
     [28569] = { name = "Transmute: Primal Water to Air", type = "transmutePrimalWaterToAir", duration = 72000 }, -- 20 hours
+    [28584] = { name = "Transmute: Primal Life to Earth", type = "transmutePrimalLifeToEarth", duration = 72000 }, -- 20 hours
     [32765] = { name = "Transmute: Earthstorm Diamond", type = "transmuteEarthstormDiamond", duration = 72000 }, -- 20 hours
     [32766] = { name = "Transmute: Skyfire Diamond", type = "transmuteSkyfireDiamond", duration = 72000 }, -- 20 hours
     [17561] = { name = "Transmute: Undeath to Water", type = "transmuteUndeathToWater", duration = 86400 }, -- 24 hours
@@ -56,7 +57,7 @@ end
 PL.PROFESSION_COOLDOWNS = {
     tailoring = { "shadowcloth", "primalMooncloth", "spellcloth" },
     leatherworking = { "saltShaker" },
-    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
+    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
 }
 
 -- Friendly names for cooldown types
@@ -75,6 +76,7 @@ PL.COOLDOWN_NAMES = {
     transmutePrimalWaterToShadow = "Transmute: Primal Water to Shadow",
     transmutePrimalEarthToWater = "Transmute: Primal Earth to Water",
     transmutePrimalWaterToAir = "Transmute: Primal Water to Air",
+    transmutePrimalLifeToEarth = "Transmute: Primal Life to Earth",
     transmuteEarthstormDiamond = "Transmute: Earthstorm Diamond",
     transmuteSkyfireDiamond = "Transmute: Skyfire Diamond"
 }
@@ -95,6 +97,7 @@ PL.COOLDOWN_SPELLS = {
     transmutePrimalWaterToShadow = 28581,
     transmutePrimalEarthToWater = 28567,
     transmutePrimalWaterToAir = 28569,
+    transmutePrimalLifeToEarth = 28584,
     transmuteEarthstormDiamond = 32765,
     transmuteSkyfireDiamond = 32766
 }
@@ -115,6 +118,7 @@ PL.COOLDOWN_DURATIONS = {
     transmutePrimalWaterToShadow = 72000,
     transmutePrimalEarthToWater = 72000,
     transmutePrimalWaterToAir = 72000,
+    transmutePrimalLifeToEarth = 72000,
     transmuteEarthstormDiamond = 72000,
     transmuteSkyfireDiamond = 72000
 }
@@ -167,6 +171,11 @@ PL.COOLDOWN_SOURCES = {
         pattern = { itemId = 22918, name = "Recipe: Transmute Primal Water to Air" },
         vendor = { npcId = 17904, name = "Fedryen Swiftspear", tomtom = "/way #1946 79.2 63.8 Fedryen Swiftspear" }
     },
+    transmutePrimalLifeToEarth = {
+        spellId = 28584,
+        skillRequired = 350,
+        discovery = true
+    },
     transmuteEarthstormDiamond = {
         spellId = 32765,
         skillRequired = 350,
@@ -205,6 +214,7 @@ PL.COOLDOWN_TO_PROFESSION = {
     transmutePrimalWaterToShadow = "alchemy",
     transmutePrimalEarthToWater = "alchemy",
     transmutePrimalWaterToAir = "alchemy",
+    transmutePrimalLifeToEarth = "alchemy",
     transmuteEarthstormDiamond = "alchemy",
     transmuteSkyfireDiamond = "alchemy"
 }
