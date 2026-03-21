@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.12.0
+
+### New Features
+- **Salt Shaker in Sources tab** - Salt Shaker now appears in the Sources tab with a clickable item link and source info ("Crafted by Engineers (250) or buy from AH")
+
+### Fixes
+- **Fixed Salt Shaker showing "Ready!" while on cooldown** - `GetContainerItemCooldown` could return no data or a short item-use cooldown, which overwrote the valid profession cooldown (2d 23h) with "Ready!". Item cooldown detection now preserves existing saved cooldowns that haven't expired yet, and filters out short durations (<60s)
+- **Improved cooldown polling for item-based cooldowns** - `PollSpellCooldowns` no longer skips item-based cooldowns like Salt Shaker, providing a fallback detection mechanism via `GetSpellCooldown`
+
+---
+
 ## v1.11.0
 
 ### New Features

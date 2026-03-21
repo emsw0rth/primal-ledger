@@ -189,6 +189,14 @@ PL.COOLDOWN_SOURCES = {
         vendor = { npcId = 17657, name = "Logistics Officer Ulrike", tomtom = "/way #1944 56.6 62.4 Logistics Officer Ulrike" },
         vendorHorde = { npcId = 17585, name = "Quartermaster Urgronn", tomtom = "/way #1944 54.9 37.9 Quartermaster Urgronn" }
     },
+
+    -- Leatherworking
+    saltShaker = {
+        spellId = 19566,
+        skillRequired = 250,
+        item = { itemId = 15846, name = "Salt Shaker" },
+        engineeringCraft = true
+    },
 }
 
 -- Profession spell names (for opening the tradeskill window)
@@ -317,9 +325,9 @@ function PL:PollSpellCooldowns(charKey)
     charData.cooldowns = charData.cooldowns or {}
 
     for cdType, spellID in pairs(self.COOLDOWN_SPELLS) do
-        -- Only poll cooldowns for crafts already known (detected via profession window scan).
-        -- Skip item-based cooldowns (handled by DetectItemCooldowns via bag scanning).
-        if charData.knownCrafts[cdType] and not self.COOLDOWN_ITEMS[cdType] then
+        -- Only poll cooldowns for crafts already known (detected via profession window scan
+        -- or bag scanning for item-based cooldowns like Salt Shaker).
+        if charData.knownCrafts[cdType] then
             local start, duration = GetSpellCooldown(spellID)
             start = start or 0
             duration = duration or 0
@@ -400,15 +408,32 @@ function PL:DetectItemCooldowns(charKey)
                     -- Check item cooldown
                     local startTime, duration, isEnabled = GetContainerItemCooldown(bag, slot)
                     if startTime and startTime > 0 and duration > 0 and isEnabled == 1 then
-                        local remaining = (startTime + duration) - GetTime()
-                        if remaining > 0 then
-                            charData.cooldowns[cdType] = time() + remaining
-                        else
-                            charData.cooldowns[cdType] = 0
+                        -- Filter out short cooldowns (<60s) to ignore GCDs or
+                        -- brief item-use cooldowns that aren't the profession CD
+                        if duration >= 60 then
+                            local remaining = (startTime + duration) - GetTime()
+                            if remaining > 0 then
+                                local expirationTime = time() + remaining
+                                -- Only update if this expires later than what we already have
+                                local existing = charData.cooldowns[cdType]
+                                if not existing or existing == 0 or expirationTime > existing then
+                                    charData.cooldowns[cdType] = expirationTime
+                                end
+                            else
+                                -- Item cooldown expired — only mark ready if no saved cooldown is still active
+                                local existing = charData.cooldowns[cdType]
+                                if not existing or existing == 0 or existing <= time() then
+                                    charData.cooldowns[cdType] = 0
+                                end
+                            end
                         end
+                        -- Short cooldowns (<60s) are ignored entirely
                     else
-                        -- No cooldown active, mark as ready (only if not already tracked)
-                        if not charData.cooldowns[cdType] then
+                        -- No item cooldown reported — only mark ready if no saved cooldown is still active
+                        local existing = charData.cooldowns[cdType]
+                        if not existing then
+                            charData.cooldowns[cdType] = 0
+                        elseif existing > 0 and existing <= time() then
                             charData.cooldowns[cdType] = 0
                         end
                     end

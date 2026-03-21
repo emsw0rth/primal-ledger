@@ -847,6 +847,7 @@ function PL:UpdateMainFrame()
         local sources = self.COOLDOWN_SOURCES or {}
         local sourceOrder = {
             "primalMooncloth", "shadowcloth", "spellcloth",
+            "saltShaker",
             "primalMight",
             "transmutePrimalAirToFire", "transmutePrimalEarthToWater",
             "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth",
@@ -896,6 +897,28 @@ function PL:UpdateMainFrame()
                     linkRow:SetScript("OnMouseUp", nil)
                     linkRow:SetScript("OnEnter", nil)
                     linkRow:SetScript("OnLeave", nil)
+                elseif source.engineeringCraft then
+                    -- Engineering-crafted item — link the item itself
+                    local itemLink = "|cff1eff00|Hitem:" .. source.item.itemId .. "::::::::70:::::|h[" .. source.item.name .. "]|h|r"
+                    linkRow.text:SetTextColor(unpack(COLORS.textNormal))
+                    linkRow.text:SetText("  Item: " .. itemLink)
+                    linkRow.itemLink = itemLink
+                    linkRow.itemId = source.item.itemId
+                    linkRow:SetScript("OnMouseUp", function(self, button)
+                        if button == "LeftButton" and IsShiftKeyDown() and ChatFrame1EditBox:IsShown() then
+                            ChatFrame1EditBox:Insert(self.itemLink)
+                        end
+                    end)
+                    linkRow:SetScript("OnEnter", function(self)
+                        self.highlight:Show()
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                        GameTooltip:SetHyperlink("item:" .. self.itemId)
+                        GameTooltip:Show()
+                    end)
+                    linkRow:SetScript("OnLeave", function(self)
+                        self.highlight:Hide()
+                        GameTooltip:Hide()
+                    end)
                 else
                     -- Create item link (blue color for rare items)
                     local itemLink = "|cff0070dd|Hitem:" .. source.pattern.itemId .. "::::::::70:::::|h[" .. source.pattern.name .. "]|h|r"
@@ -937,7 +960,14 @@ function PL:UpdateMainFrame()
                 sourceRow.time:SetText("")
                 sourceRow.timeBtn.isClickable = false
 
-                if source.discovery then
+                if source.engineeringCraft then
+                    -- Engineering-crafted item — show source hint
+                    sourceRow.text:SetText("  Crafted by Engineers (250) or buy from AH")
+                    -- Hide vendor/TomTom buttons if they exist from a previous render
+                    if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
+                    if sourceRow.separatorText then sourceRow.separatorText:Hide() end
+                    if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
+                elseif source.discovery then
                     -- Discovery recipe — show hint text instead of vendor
                     sourceRow.text:SetText("  Perform other TBC transmutes to discover")
                     -- Hide vendor/TomTom buttons if they exist from a previous render
