@@ -26,6 +26,9 @@ PL.COOLDOWNS = {
     [32765] = { name = "Transmute: Earthstorm Diamond", type = "transmuteEarthstormDiamond", duration = 72000 }, -- 20 hours
     [32766] = { name = "Transmute: Skyfire Diamond", type = "transmuteSkyfireDiamond", duration = 72000 }, -- 20 hours
     [17561] = { name = "Transmute: Undeath to Water", type = "transmuteUndeathToWater", duration = 86400 }, -- 24 hours
+
+    -- Enchanting cooldowns
+    [28028] = { name = "Void Sphere", type = "voidSphere", duration = 172800 },                              -- 48 hours
 }
 
 -- Profession names for detection
@@ -57,7 +60,8 @@ end
 PL.PROFESSION_COOLDOWNS = {
     tailoring = { "shadowcloth", "primalMooncloth", "spellcloth" },
     leatherworking = { "saltShaker" },
-    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" }
+    alchemy = { "primalMight", "transmuteUndeathToWater", "transmutePrimalManaToFire", "transmutePrimalShadowToWater", "transmutePrimalAirToFire", "transmutePrimalWaterToShadow", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" },
+    enchanting = { "voidSphere" }
 }
 
 -- Friendly names for cooldown types
@@ -78,7 +82,9 @@ PL.COOLDOWN_NAMES = {
     transmutePrimalWaterToAir = "Transmute: Primal Water to Air",
     transmutePrimalLifeToEarth = "Transmute: Primal Life to Earth",
     transmuteEarthstormDiamond = "Transmute: Earthstorm Diamond",
-    transmuteSkyfireDiamond = "Transmute: Skyfire Diamond"
+    transmuteSkyfireDiamond = "Transmute: Skyfire Diamond",
+
+    voidSphere = "Void Sphere"
 }
 
 -- Spell IDs for each cooldown type (used to check if player knows the craft)
@@ -99,7 +105,9 @@ PL.COOLDOWN_SPELLS = {
     transmutePrimalWaterToAir = 28569,
     transmutePrimalLifeToEarth = 28584,
     transmuteEarthstormDiamond = 32765,
-    transmuteSkyfireDiamond = 32766
+    transmuteSkyfireDiamond = 32766,
+
+    voidSphere = 28028
 }
 
 -- Cooldown durations
@@ -120,7 +128,9 @@ PL.COOLDOWN_DURATIONS = {
     transmutePrimalWaterToAir = 72000,
     transmutePrimalLifeToEarth = 72000,
     transmuteEarthstormDiamond = 72000,
-    transmuteSkyfireDiamond = 72000
+    transmuteSkyfireDiamond = 72000,
+
+    voidSphere = 172800 -- 48 hours
 }
 
 -- Source information for cooldown crafts
@@ -197,13 +207,21 @@ PL.COOLDOWN_SOURCES = {
         item = { itemId = 15846, name = "Salt Shaker" },
         engineeringCraft = true
     },
+
+    -- Enchanting
+    voidSphere = {
+        spellId = 28028,
+        skillRequired = 350,
+        trainer = true
+    },
 }
 
 -- Profession spell names (for opening the tradeskill window)
 PL.PROFESSION_SPELLS = {
     tailoring = "Tailoring",
     leatherworking = "Leatherworking",
-    alchemy = "Alchemy"
+    alchemy = "Alchemy",
+    enchanting = "Enchanting"
 }
 
 -- Map cooldown types to their profession
@@ -224,7 +242,9 @@ PL.COOLDOWN_TO_PROFESSION = {
     transmutePrimalWaterToAir = "alchemy",
     transmutePrimalLifeToEarth = "alchemy",
     transmuteEarthstormDiamond = "alchemy",
-    transmuteSkyfireDiamond = "alchemy"
+    transmuteSkyfireDiamond = "alchemy",
+
+    voidSphere = "enchanting"
 }
 
 -- Detect professions for a character (TBC Classic API)
@@ -464,7 +484,7 @@ function PL:ScanTradeSkillWindow(charKey)
     elseif tradeskillName == "Tailoring" then
         professionKey = "tailoring"
     else
-        return -- Not a profession we track
+        return -- Not a profession we track (Enchanting uses ScanCraftWindow)
     end
 
     -- Wipe existing data for this profession's crafts
@@ -497,6 +517,56 @@ function PL:ScanTradeSkillWindow(charKey)
                         charData.cooldowns[cdType] = 0
                     end
                     break -- Found exact match, no need to check other cooldown types
+                end
+            end
+        end
+    end
+end
+
+-- Scan the craft window for cooldown data (Enchanting uses Craft API, not TradeSkill API)
+function PL:ScanCraftWindow(charKey)
+    local charData = self.db.characters[charKey]
+    if not charData then return end
+
+    local numCrafts = GetNumCrafts()
+    if not numCrafts or numCrafts == 0 then return end
+
+    local craftName = GetCraftDisplaySkillLine()
+    if not craftName then return end
+
+    local professionKey = nil
+    if craftName == "Enchanting" then
+        professionKey = "enchanting"
+    else
+        return -- Not a craft profession we track
+    end
+
+    -- Wipe existing data for this profession's crafts
+    local professionCooldowns = self.PROFESSION_COOLDOWNS[professionKey]
+    if professionCooldowns then
+        for _, cdType in ipairs(professionCooldowns) do
+            charData.knownCrafts[cdType] = nil
+            charData.cooldowns[cdType] = nil
+        end
+    end
+
+    -- Re-fetch known crafts and cooldowns from the craft window
+    for i = 1, numCrafts do
+        local name, _, craftType = GetCraftInfo(i)
+        if name and craftType ~= "header" then
+            for cdType, cdName in pairs(self.COOLDOWN_NAMES) do
+                if name == cdName then
+                    charData.knownCrafts[cdType] = true
+
+                    -- GetCraftCooldown returns seconds remaining (same as GetTradeSkillCooldown)
+                    local cooldownRemaining = GetCraftCooldown(i)
+                    if cooldownRemaining and cooldownRemaining > 0 then
+                        local expirationTime = time() + cooldownRemaining
+                        charData.cooldowns[cdType] = expirationTime
+                    else
+                        charData.cooldowns[cdType] = 0
+                    end
+                    break
                 end
             end
         end
@@ -644,6 +714,21 @@ function PL:GetCharacterCooldowns(charKey)
         end
     end
 
+    -- Check enchanting cooldowns
+    if hasProfession(charData.professions.enchanting) then
+        for _, cdType in ipairs(self.PROFESSION_COOLDOWNS.enchanting) do
+            if knownCrafts[cdType] and self:IsCooldownEnabled(cdType) then
+                local remaining = self:GetCooldownRemaining(charKey, cdType)
+                table.insert(cooldowns, {
+                    type = cdType,
+                    name = self.COOLDOWN_NAMES[cdType],
+                    remaining = remaining,
+                    formattedTime = self:FormatTimeRemaining(remaining)
+                })
+            end
+        end
+    end
+
     return cooldowns
 end
 
@@ -678,7 +763,7 @@ function PL:HasRelevantProfessions(charKey)
     local charData = self.db.characters[charKey]
     if not charData or not charData.professions then return false end
 
-    return hasProfession(charData.professions.tailoring) or hasProfession(charData.professions.leatherworking) or hasProfession(charData.professions.alchemy)
+    return hasProfession(charData.professions.tailoring) or hasProfession(charData.professions.leatherworking) or hasProfession(charData.professions.alchemy) or hasProfession(charData.professions.enchanting)
 end
 
 -- Open profession window and select a specific recipe

@@ -1,6 +1,6 @@
 # Primal Ledger
 
-A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Leatherworking cooldowns across all your characters.
+A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, Leatherworking, and Enchanting cooldowns across all your characters.
 
 ## Features
 
@@ -15,7 +15,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 - **Tracker visibility options** - Independently toggle visibility in combat and in party/raid
 - **Current character first** - Your logged-in character always appears at the top of the list
 - **Per-profession sync** - Opening a profession window refreshes cooldown data for that profession only
-- **Sources tab** - View recipe/pattern sources with clickable item links, vendor targeting, and TomTom waypoints for tailoring, leatherworking, and alchemy cooldowns
+- **Sources tab** - View recipe/pattern sources with clickable item links, vendor targeting, and TomTom waypoints — grouped by profession in collapsible accordion sections
 - **Show seconds** - Optional setting to display seconds remaining on cooldown timers
 - **Settings tab** - Toggle tracker window, select display mode, reset all data, open CD Tracking
 - **CD Tracking** - Enable or disable tracking for individual cooldown crafts (standalone window from Settings)
@@ -53,6 +53,12 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 | Transmute: Earthstorm Diamond | 20 hours |
 | Transmute: Skyfire Diamond | 20 hours |
 
+### Enchanting
+
+| Craft | Cooldown |
+|-------|----------|
+| Void Sphere | 48 hours |
+
 ## Installation
 
 1. Download the latest release from the [Releases](https://github.com/patrickwlarsen/primal-ledger/releases) page
@@ -66,12 +72,12 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, and Le
 
 - **Open the window**: Click the minimap button or type `/pl`
 - **Close the window**: Click the X button or press Escape
-- **Update cooldowns**: Open your profession window (Alchemy/Tailoring) to sync cooldown data
+- **Update cooldowns**: Open your profession window (Alchemy/Tailoring/Enchanting) to sync cooldown data
 - **Quick craft**:
   - **Left-click** "Ready!" to open the profession window and select the recipe
   - **Right-click** "Ready!" to select the recipe in an already-open profession window
 - **Sources tab**:
-  - View where to obtain patterns/recipes for tailoring, leatherworking, and alchemy cooldown crafts
+  - View where to obtain patterns/recipes for tailoring, leatherworking, alchemy, and enchanting cooldown crafts
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)

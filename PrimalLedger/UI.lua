@@ -842,227 +842,259 @@ function PL:UpdateMainFrame()
             emptyRow:Show()
         end
 
-    -- SOURCES TAB: Show craft source information
+    -- SOURCES TAB: Show craft source information grouped by profession accordion
     elseif selectedTab == 3 then
         local sources = self.COOLDOWN_SOURCES or {}
-        local sourceOrder = {
-            "primalMooncloth", "shadowcloth", "spellcloth",
-            "saltShaker",
-            "primalMight",
-            "transmutePrimalAirToFire", "transmutePrimalEarthToWater",
-            "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth",
-            "transmuteEarthstormDiamond", "transmuteSkyfireDiamond",
+
+        -- Profession groups for accordion display
+        local sourceGroups = {
+            { key = "tailoring", name = "Tailoring", items = { "primalMooncloth", "shadowcloth", "spellcloth" } },
+            { key = "leatherworking", name = "Leatherworking", items = { "saltShaker" } },
+            { key = "alchemy", name = "Alchemy", items = { "primalMight", "transmutePrimalAirToFire", "transmutePrimalEarthToWater", "transmutePrimalWaterToAir", "transmutePrimalLifeToEarth", "transmuteEarthstormDiamond", "transmuteSkyfireDiamond" } },
+            { key = "enchanting", name = "Enchanting", items = { "voidSphere" } },
         }
 
-        for _, cdType in ipairs(sourceOrder) do
-            local source = sources[cdType]
-            if source then
-                local craftName = self.COOLDOWN_NAMES[cdType]
+        -- Initialize accordion state (all collapsed by default)
+        self.mainFrame.sourceAccordions = self.mainFrame.sourceAccordions or {}
 
-                -- Craft name header
-                rowIndex = rowIndex + 1
-                local headerRow = self.mainFrame.rows[rowIndex]
-                if not headerRow then
-                    headerRow = CreateRow(content, rowIndex)
-                    self.mainFrame.rows[rowIndex] = headerRow
-                end
-                headerRow:ClearAllPoints()
-                headerRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                headerRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                headerRow.text:SetTextColor(unpack(COLORS.accent)) -- Orange header
-                headerRow.text:SetText(craftName)
-                headerRow.time:SetText("")
-                headerRow.timeBtn.isClickable = false
-                headerRow:Show()
+        for _, group in ipairs(sourceGroups) do
+            local isExpanded = self.mainFrame.sourceAccordions[group.key] or false
+            local arrow = isExpanded and "- " or "+ "
 
-                -- Link row (clickable item link or discovery text)
-                rowIndex = rowIndex + 1
-                local linkRow = self.mainFrame.rows[rowIndex]
-                if not linkRow then
-                    linkRow = CreateRow(content, rowIndex)
-                    self.mainFrame.rows[rowIndex] = linkRow
-                end
-                linkRow:ClearAllPoints()
-                linkRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                linkRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                linkRow.time:SetText("")
-                linkRow.timeBtn.isClickable = false
-
-                if source.discovery then
-                    -- Discovery recipe — no item link
-                    linkRow.text:SetTextColor(unpack(COLORS.textNormal))
-                    linkRow.text:SetText("  Learned via Discovery")
-                    linkRow.itemLink = nil
-                    linkRow.itemId = nil
-                    linkRow:SetScript("OnMouseUp", nil)
-                    linkRow:SetScript("OnEnter", nil)
-                    linkRow:SetScript("OnLeave", nil)
-                elseif source.engineeringCraft then
-                    -- Engineering-crafted item — link the item itself
-                    local itemLink = "|cff1eff00|Hitem:" .. source.item.itemId .. "::::::::70:::::|h[" .. source.item.name .. "]|h|r"
-                    linkRow.text:SetTextColor(unpack(COLORS.textNormal))
-                    linkRow.text:SetText("  Item: " .. itemLink)
-                    linkRow.itemLink = itemLink
-                    linkRow.itemId = source.item.itemId
-                    linkRow:SetScript("OnMouseUp", function(self, button)
-                        if button == "LeftButton" and IsShiftKeyDown() and ChatFrame1EditBox:IsShown() then
-                            ChatFrame1EditBox:Insert(self.itemLink)
-                        end
-                    end)
-                    linkRow:SetScript("OnEnter", function(self)
-                        self.highlight:Show()
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                        GameTooltip:SetHyperlink("item:" .. self.itemId)
-                        GameTooltip:Show()
-                    end)
-                    linkRow:SetScript("OnLeave", function(self)
-                        self.highlight:Hide()
-                        GameTooltip:Hide()
-                    end)
-                else
-                    -- Create item link (blue color for rare items)
-                    local itemLink = "|cff0070dd|Hitem:" .. source.pattern.itemId .. "::::::::70:::::|h[" .. source.pattern.name .. "]|h|r"
-                    linkRow.text:SetTextColor(unpack(COLORS.textNormal))
-                    linkRow.text:SetText("  Link: " .. itemLink)
-
-                    -- Make the row clickable to show item tooltip and allow shift-click to link
-                    linkRow.itemLink = itemLink
-                    linkRow.itemId = source.pattern.itemId
-                    linkRow:SetScript("OnMouseUp", function(self, button)
-                        if button == "LeftButton" and IsShiftKeyDown() and ChatFrame1EditBox:IsShown() then
-                            ChatFrame1EditBox:Insert(self.itemLink)
-                        end
-                    end)
-                    linkRow:SetScript("OnEnter", function(self)
-                        self.highlight:Show()
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                        GameTooltip:SetHyperlink("item:" .. self.itemId)
-                        GameTooltip:Show()
-                    end)
-                    linkRow:SetScript("OnLeave", function(self)
-                        self.highlight:Hide()
-                        GameTooltip:Hide()
-                    end)
-                end
-                linkRow:Show()
-
-                -- Source row (vendor name with TomTom link, or discovery hint)
-                rowIndex = rowIndex + 1
-                local sourceRow = self.mainFrame.rows[rowIndex]
-                if not sourceRow then
-                    sourceRow = CreateRow(content, rowIndex)
-                    self.mainFrame.rows[rowIndex] = sourceRow
-                end
-                sourceRow:ClearAllPoints()
-                sourceRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                sourceRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
-                sourceRow.text:SetTextColor(unpack(COLORS.textNormal))
-                sourceRow.time:SetText("")
-                sourceRow.timeBtn.isClickable = false
-
-                if source.engineeringCraft then
-                    -- Engineering-crafted item — show source hint
-                    sourceRow.text:SetText("  Crafted by Engineers (250) or buy from AH")
-                    -- Hide vendor/TomTom buttons if they exist from a previous render
-                    if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
-                    if sourceRow.separatorText then sourceRow.separatorText:Hide() end
-                    if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
-                elseif source.discovery then
-                    -- Discovery recipe — show hint text instead of vendor
-                    sourceRow.text:SetText("  Perform other TBC transmutes to discover")
-                    -- Hide vendor/TomTom buttons if they exist from a previous render
-                    if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
-                    if sourceRow.separatorText then sourceRow.separatorText:Hide() end
-                    if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
-                else
-                    sourceRow.text:SetText("  Source: ")
-
-                    -- Create vendor name button if not exists
-                    if not sourceRow.vendorBtn then
-                        sourceRow.vendorBtn = CreateFrame("Button", nil, sourceRow)
-                        sourceRow.vendorBtn:SetHeight(ROW_HEIGHT)
-                        sourceRow.vendorBtn.text = sourceRow.vendorBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                        sourceRow.vendorBtn.text:SetPoint("LEFT", sourceRow.vendorBtn, "LEFT", 0, 0)
-                        sourceRow.vendorBtn.text:SetTextColor(unpack(COLORS.accentMuted))
-
-                        sourceRow.vendorBtn:SetScript("OnEnter", function(self)
-                            self.text:SetTextColor(unpack(COLORS.accentHover))
-                            sourceRow.highlight:Show()
-                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                            GameTooltip:AddLine("Target " .. (self.vendorName or "NPC"))
-                            GameTooltip:AddLine("Click to target this NPC", 0.8, 0.8, 0.8)
-                            GameTooltip:Show()
-                        end)
-                        sourceRow.vendorBtn:SetScript("OnLeave", function(self)
-                            self.text:SetTextColor(unpack(COLORS.accentMuted))
-                            sourceRow.highlight:Hide()
-                            GameTooltip:Hide()
-                        end)
-                    end
-
-                    -- Set vendor name and position
-                    sourceRow.vendorBtn.text:SetText(source.vendor.name)
-                    sourceRow.vendorBtn:SetWidth(sourceRow.vendorBtn.text:GetStringWidth() + 4)
-                    sourceRow.vendorBtn:SetPoint("LEFT", sourceRow.text, "RIGHT", 0, 0)
-                    sourceRow.vendorBtn.vendorName = source.vendor.name
-                    sourceRow.vendorBtn:SetScript("OnClick", function(self)
-                        if self.vendorName then
-                            TargetUnit(self.vendorName)
-                        end
-                    end)
-                    sourceRow.vendorBtn:Show()
-
-                    -- Create separator text if not exists
-                    if not sourceRow.separatorText then
-                        sourceRow.separatorText = sourceRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                        sourceRow.separatorText:SetTextColor(unpack(COLORS.textNormal))
-                        sourceRow.separatorText:SetText(" - ")
-                    end
-                    sourceRow.separatorText:SetPoint("LEFT", sourceRow.vendorBtn, "RIGHT", 0, 0)
-                    sourceRow.separatorText:Show()
-
-                    -- Create TomTom link button if not exists
-                    if not sourceRow.tomtomBtn then
-                        sourceRow.tomtomBtn = CreateFrame("Button", nil, sourceRow)
-                        sourceRow.tomtomBtn:SetHeight(ROW_HEIGHT)
-                        sourceRow.tomtomBtn.text = sourceRow.tomtomBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                        sourceRow.tomtomBtn.text:SetPoint("LEFT", sourceRow.tomtomBtn, "LEFT", 0, 0)
-                        sourceRow.tomtomBtn.text:SetText("TomTom")
-                        sourceRow.tomtomBtn.text:SetTextColor(unpack(COLORS.accentMuted))
-                        sourceRow.tomtomBtn:SetWidth(sourceRow.tomtomBtn.text:GetStringWidth() + 4)
-
-                        sourceRow.tomtomBtn:SetScript("OnEnter", function(self)
-                            self.text:SetTextColor(unpack(COLORS.accentHover))
-                            sourceRow.highlight:Show()
-                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                            GameTooltip:AddLine("Add TomTom waypoint")
-                            GameTooltip:AddLine("Click to set waypoint", 0.8, 0.8, 0.8)
-                            GameTooltip:Show()
-                        end)
-                        sourceRow.tomtomBtn:SetScript("OnLeave", function(self)
-                            self.text:SetTextColor(unpack(COLORS.accentMuted))
-                            sourceRow.highlight:Hide()
-                            GameTooltip:Hide()
-                        end)
-                    end
-
-                    -- Position TomTom button after separator
-                    sourceRow.tomtomBtn:SetPoint("LEFT", sourceRow.separatorText, "RIGHT", 0, 0)
-                    sourceRow.tomtomBtn.tomtomCommand = source.vendor.tomtom
-                    sourceRow.tomtomBtn:SetScript("OnClick", function(self)
-                        if self.tomtomCommand then
-                            -- Execute the TomTom command
-                            DEFAULT_CHAT_FRAME.editBox:SetText(self.tomtomCommand)
-                            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox)
-                        end
-                    end)
-                    sourceRow.tomtomBtn:Show()
-                end
-                sourceRow:Show()
-
-                -- Add spacing separator between crafts
-                rowIndex = rowIndex + 0.5
+            -- Profession accordion header
+            rowIndex = rowIndex + 1
+            local headerRow = self.mainFrame.rows[rowIndex]
+            if not headerRow then
+                headerRow = CreateRow(content, rowIndex)
+                self.mainFrame.rows[rowIndex] = headerRow
             end
+            headerRow:ClearAllPoints()
+            headerRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+            headerRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+            headerRow.text:SetTextColor(unpack(COLORS.accent))
+            headerRow.text:SetText(arrow .. group.name)
+            headerRow.time:SetText("")
+            headerRow.timeBtn.isClickable = false
+            headerRow:SetScript("OnMouseUp", function()
+                PL.mainFrame.sourceAccordions[group.key] = not PL.mainFrame.sourceAccordions[group.key]
+                PL:UpdateMainFrame()
+            end)
+            headerRow:Show()
+
+            -- Render child rows only if expanded
+            if isExpanded then
+                for _, cdType in ipairs(group.items) do
+                    local source = sources[cdType]
+                    if source then
+                        local craftName = self.COOLDOWN_NAMES[cdType]
+
+                        -- Craft name sub-header
+                        rowIndex = rowIndex + 1
+                        local nameRow = self.mainFrame.rows[rowIndex]
+                        if not nameRow then
+                            nameRow = CreateRow(content, rowIndex)
+                            self.mainFrame.rows[rowIndex] = nameRow
+                        end
+                        nameRow:ClearAllPoints()
+                        nameRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        nameRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        nameRow.text:SetTextColor(unpack(COLORS.accentMuted))
+                        nameRow.text:SetText("  " .. craftName)
+                        nameRow.time:SetText("")
+                        nameRow.timeBtn.isClickable = false
+                        nameRow:Show()
+
+                        -- Link row (clickable item link or discovery/trainer text)
+                        rowIndex = rowIndex + 1
+                        local linkRow = self.mainFrame.rows[rowIndex]
+                        if not linkRow then
+                            linkRow = CreateRow(content, rowIndex)
+                            self.mainFrame.rows[rowIndex] = linkRow
+                        end
+                        linkRow:ClearAllPoints()
+                        linkRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        linkRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        linkRow.time:SetText("")
+                        linkRow.timeBtn.isClickable = false
+
+                        if source.discovery then
+                            linkRow.text:SetTextColor(unpack(COLORS.textNormal))
+                            linkRow.text:SetText("    Learned via Discovery")
+                            linkRow.itemLink = nil
+                            linkRow.itemId = nil
+                            linkRow:SetScript("OnMouseUp", nil)
+                            linkRow:SetScript("OnEnter", nil)
+                            linkRow:SetScript("OnLeave", nil)
+                        elseif source.trainer then
+                            linkRow.text:SetTextColor(unpack(COLORS.textNormal))
+                            linkRow.text:SetText("    Learned from trainer")
+                            linkRow.itemLink = nil
+                            linkRow.itemId = nil
+                            linkRow:SetScript("OnMouseUp", nil)
+                            linkRow:SetScript("OnEnter", nil)
+                            linkRow:SetScript("OnLeave", nil)
+                        elseif source.engineeringCraft then
+                            local itemLink = "|cff1eff00|Hitem:" .. source.item.itemId .. "::::::::70:::::|h[" .. source.item.name .. "]|h|r"
+                            linkRow.text:SetTextColor(unpack(COLORS.textNormal))
+                            linkRow.text:SetText("    Item: " .. itemLink)
+                            linkRow.itemLink = itemLink
+                            linkRow.itemId = source.item.itemId
+                            linkRow:SetScript("OnMouseUp", function(self, button)
+                                if button == "LeftButton" and IsShiftKeyDown() and ChatFrame1EditBox:IsShown() then
+                                    ChatFrame1EditBox:Insert(self.itemLink)
+                                end
+                            end)
+                            linkRow:SetScript("OnEnter", function(self)
+                                self.highlight:Show()
+                                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                                GameTooltip:SetHyperlink("item:" .. self.itemId)
+                                GameTooltip:Show()
+                            end)
+                            linkRow:SetScript("OnLeave", function(self)
+                                self.highlight:Hide()
+                                GameTooltip:Hide()
+                            end)
+                        else
+                            local itemLink = "|cff0070dd|Hitem:" .. source.pattern.itemId .. "::::::::70:::::|h[" .. source.pattern.name .. "]|h|r"
+                            linkRow.text:SetTextColor(unpack(COLORS.textNormal))
+                            linkRow.text:SetText("    Link: " .. itemLink)
+                            linkRow.itemLink = itemLink
+                            linkRow.itemId = source.pattern.itemId
+                            linkRow:SetScript("OnMouseUp", function(self, button)
+                                if button == "LeftButton" and IsShiftKeyDown() and ChatFrame1EditBox:IsShown() then
+                                    ChatFrame1EditBox:Insert(self.itemLink)
+                                end
+                            end)
+                            linkRow:SetScript("OnEnter", function(self)
+                                self.highlight:Show()
+                                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                                GameTooltip:SetHyperlink("item:" .. self.itemId)
+                                GameTooltip:Show()
+                            end)
+                            linkRow:SetScript("OnLeave", function(self)
+                                self.highlight:Hide()
+                                GameTooltip:Hide()
+                            end)
+                        end
+                        linkRow:Show()
+
+                        -- Source row (vendor name with TomTom link, or hint text)
+                        rowIndex = rowIndex + 1
+                        local sourceRow = self.mainFrame.rows[rowIndex]
+                        if not sourceRow then
+                            sourceRow = CreateRow(content, rowIndex)
+                            self.mainFrame.rows[rowIndex] = sourceRow
+                        end
+                        sourceRow:ClearAllPoints()
+                        sourceRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        sourceRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
+                        sourceRow.text:SetTextColor(unpack(COLORS.textNormal))
+                        sourceRow.time:SetText("")
+                        sourceRow.timeBtn.isClickable = false
+
+                        if source.engineeringCraft then
+                            sourceRow.text:SetText("    Crafted by Engineers (250) or buy from AH")
+                            if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
+                            if sourceRow.separatorText then sourceRow.separatorText:Hide() end
+                            if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
+                        elseif source.trainer then
+                            sourceRow.text:SetText("    Requires " .. (source.skillRequired or "??") .. " skill")
+                            if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
+                            if sourceRow.separatorText then sourceRow.separatorText:Hide() end
+                            if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
+                        elseif source.discovery then
+                            sourceRow.text:SetText("    Perform other TBC transmutes to discover")
+                            if sourceRow.vendorBtn then sourceRow.vendorBtn:Hide() end
+                            if sourceRow.separatorText then sourceRow.separatorText:Hide() end
+                            if sourceRow.tomtomBtn then sourceRow.tomtomBtn:Hide() end
+                        else
+                            sourceRow.text:SetText("    Source: ")
+
+                            if not sourceRow.vendorBtn then
+                                sourceRow.vendorBtn = CreateFrame("Button", nil, sourceRow)
+                                sourceRow.vendorBtn:SetHeight(ROW_HEIGHT)
+                                sourceRow.vendorBtn.text = sourceRow.vendorBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                                sourceRow.vendorBtn.text:SetPoint("LEFT", sourceRow.vendorBtn, "LEFT", 0, 0)
+                                sourceRow.vendorBtn.text:SetTextColor(unpack(COLORS.accentMuted))
+
+                                sourceRow.vendorBtn:SetScript("OnEnter", function(self)
+                                    self.text:SetTextColor(unpack(COLORS.accentHover))
+                                    sourceRow.highlight:Show()
+                                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                                    GameTooltip:AddLine("Target " .. (self.vendorName or "NPC"))
+                                    GameTooltip:AddLine("Click to target this NPC", 0.8, 0.8, 0.8)
+                                    GameTooltip:Show()
+                                end)
+                                sourceRow.vendorBtn:SetScript("OnLeave", function(self)
+                                    self.text:SetTextColor(unpack(COLORS.accentMuted))
+                                    sourceRow.highlight:Hide()
+                                    GameTooltip:Hide()
+                                end)
+                            end
+
+                            sourceRow.vendorBtn.text:SetText(source.vendor.name)
+                            sourceRow.vendorBtn:SetWidth(sourceRow.vendorBtn.text:GetStringWidth() + 4)
+                            sourceRow.vendorBtn:SetPoint("LEFT", sourceRow.text, "RIGHT", 0, 0)
+                            sourceRow.vendorBtn.vendorName = source.vendor.name
+                            sourceRow.vendorBtn:SetScript("OnClick", function(self)
+                                if self.vendorName then
+                                    TargetUnit(self.vendorName)
+                                end
+                            end)
+                            sourceRow.vendorBtn:Show()
+
+                            if not sourceRow.separatorText then
+                                sourceRow.separatorText = sourceRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                                sourceRow.separatorText:SetTextColor(unpack(COLORS.textNormal))
+                                sourceRow.separatorText:SetText(" - ")
+                            end
+                            sourceRow.separatorText:SetPoint("LEFT", sourceRow.vendorBtn, "RIGHT", 0, 0)
+                            sourceRow.separatorText:Show()
+
+                            if not sourceRow.tomtomBtn then
+                                sourceRow.tomtomBtn = CreateFrame("Button", nil, sourceRow)
+                                sourceRow.tomtomBtn:SetHeight(ROW_HEIGHT)
+                                sourceRow.tomtomBtn.text = sourceRow.tomtomBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                                sourceRow.tomtomBtn.text:SetPoint("LEFT", sourceRow.tomtomBtn, "LEFT", 0, 0)
+                                sourceRow.tomtomBtn.text:SetText("TomTom")
+                                sourceRow.tomtomBtn.text:SetTextColor(unpack(COLORS.accentMuted))
+                                sourceRow.tomtomBtn:SetWidth(sourceRow.tomtomBtn.text:GetStringWidth() + 4)
+
+                                sourceRow.tomtomBtn:SetScript("OnEnter", function(self)
+                                    self.text:SetTextColor(unpack(COLORS.accentHover))
+                                    sourceRow.highlight:Show()
+                                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                                    GameTooltip:AddLine("Add TomTom waypoint")
+                                    GameTooltip:AddLine("Click to set waypoint", 0.8, 0.8, 0.8)
+                                    GameTooltip:Show()
+                                end)
+                                sourceRow.tomtomBtn:SetScript("OnLeave", function(self)
+                                    self.text:SetTextColor(unpack(COLORS.accentMuted))
+                                    sourceRow.highlight:Hide()
+                                    GameTooltip:Hide()
+                                end)
+                            end
+
+                            sourceRow.tomtomBtn:SetPoint("LEFT", sourceRow.separatorText, "RIGHT", 0, 0)
+                            sourceRow.tomtomBtn.tomtomCommand = source.vendor.tomtom
+                            sourceRow.tomtomBtn:SetScript("OnClick", function(self)
+                                if self.tomtomCommand then
+                                    DEFAULT_CHAT_FRAME.editBox:SetText(self.tomtomCommand)
+                                    ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox)
+                                end
+                            end)
+                            sourceRow.tomtomBtn:Show()
+                        end
+                        sourceRow:Show()
+
+                        -- Add spacing between crafts within the group
+                        rowIndex = rowIndex + 0.5
+                    end
+                end
+            end
+
+            -- Add spacing after each profession group
+            rowIndex = rowIndex + 0.5
         end
 
         -- Show message if no sources defined

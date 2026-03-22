@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.13.0
+
+### New Features
+- **Enchanting profession support** - Enchanting is now a tracked profession, detected via the Craft window API
+- **New tracked cooldown: Void Sphere** - Enchanting (350), 48-hour cooldown, learned from trainer
+- **Trainer-learned recipe support in Sources tab** - Recipes learned from trainers now show "Learned from trainer" with skill requirement
+- **Sources tab accordion layout** - Sources are now grouped by profession in collapsible accordion sections, all collapsed by default for a cleaner look
+
+---
+
 ## v1.12.0
 
 ### New Features

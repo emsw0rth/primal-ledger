@@ -4,7 +4,7 @@
 local addonName, PL = ...
 
 -- Addon namespace
-PL.version = "1.12.0"
+PL.version = "1.13.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -102,6 +102,12 @@ end
 function PL:OnCraftUpdate()
     if not self.playerLoggedIn then return end
     self:CreateCraftExportButton()
+
+    -- Scan craft window for enchanting cooldowns
+    local charKey = self:GetCharacterKey()
+    if charKey then
+        self:ScanCraftWindow(charKey)
+    end
 end
 
 -- Print helper
