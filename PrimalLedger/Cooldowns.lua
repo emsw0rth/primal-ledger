@@ -775,25 +775,44 @@ function PL:OpenCraftingSpell(cdType)
     if not professionSpell then return end
 
     local spellName = self.COOLDOWN_NAMES[cdType]
+    local isEnchanting = (profession == "enchanting")
 
-    -- Store the spell we want to select after the tradeskill window opens
+    -- Check if the profession window is already open
+    if isEnchanting then
+        if CraftFrame and CraftFrame:IsShown() then
+            self:SelectRecipeByName(spellName, true)
+            return
+        end
+    else
+        if TradeSkillFrame and TradeSkillFrame:IsShown() then
+            self:SelectRecipeByName(spellName, false)
+            return
+        end
+    end
+
+    -- Store the spell we want to select after the window opens
     self.pendingSpellSelection = spellName
+    self.pendingIsEnchanting = isEnchanting
 
     -- Create event/timer frame if not already
     if not self.tradeskillEventFrame then
         self.tradeskillEventFrame = CreateFrame("Frame")
         self.tradeskillEventFrame:RegisterEvent("TRADE_SKILL_SHOW")
+        self.tradeskillEventFrame:RegisterEvent("CRAFT_SHOW")
         self.tradeskillEventFrame:SetScript("OnEvent", function(self, event)
-            if event == "TRADE_SKILL_SHOW" and PL.pendingSpellSelection then
-                -- Add a small delay to let the tradeskill window populate
+            if not PL.pendingSpellSelection then return end
+            local expectEnchanting = PL.pendingIsEnchanting
+            if (event == "CRAFT_SHOW" and expectEnchanting) or (event == "TRADE_SKILL_SHOW" and not expectEnchanting) then
                 self.waitTime = 0
                 self.targetSpell = PL.pendingSpellSelection
+                self.targetIsEnchanting = expectEnchanting
                 PL.pendingSpellSelection = nil
+                PL.pendingIsEnchanting = nil
                 self:SetScript("OnUpdate", function(self, elapsed)
                     self.waitTime = self.waitTime + elapsed
-                    if self.waitTime >= 0.1 then
+                    if self.waitTime >= 0.3 then
                         self:SetScript("OnUpdate", nil)
-                        PL:SelectTradeSkillByName(self.targetSpell)
+                        PL:SelectRecipeByName(self.targetSpell, self.targetIsEnchanting)
                     end
                 end)
             end
@@ -804,42 +823,64 @@ function PL:OpenCraftingSpell(cdType)
     CastSpellByName(professionSpell)
 end
 
--- Select a recipe in an already-open tradeskill window (right-click action)
+-- Open the profession window without selecting a recipe (right-click action)
 function PL:SelectCraftingSpell(cdType)
-    local spellName = self.COOLDOWN_NAMES[cdType]
-    if not spellName then return end
+    local profession = self.COOLDOWN_TO_PROFESSION[cdType]
+    if not profession then return end
 
-    -- Check if tradeskill window is open
-    local numSkills = GetNumTradeSkills()
-    if not numSkills or numSkills == 0 then
-        self:Print("Open your profession window first!")
-        return
-    end
+    local professionSpell = self.PROFESSION_SPELLS[profession]
+    if not professionSpell then return end
 
-    -- Select the recipe
-    self:SelectTradeSkillByName(spellName)
+    CastSpellByName(professionSpell)
 end
 
--- Find and select a recipe by name in the tradeskill window
-function PL:SelectTradeSkillByName(spellName)
-    local numSkills = GetNumTradeSkills()
-    if not numSkills then return end
+-- Find and select a recipe by name in the tradeskill or craft window
+function PL:SelectRecipeByName(spellName, isEnchanting)
+    if isEnchanting then
+        local numCrafts = GetNumCrafts()
+        if not numCrafts then return end
 
-    for i = 1, numSkills do
-        local name, skillType = GetTradeSkillInfo(i)
-        -- Use partial match in case names differ slightly (e.g., "Transmute: Arcanite" vs "Transmute: Arcanite Bar")
-        if name and skillType ~= "header" and string.find(name, spellName, 1, true) then
-            SelectTradeSkill(i)
-            return
+        for i = 1, numCrafts do
+            local name, _, craftType = GetCraftInfo(i)
+            if name and craftType ~= "header" and string.find(name, spellName, 1, true) then
+                CraftFrame_SetSelection(i)
+                return
+            end
         end
-    end
+        -- Fallback: reverse match
+        for i = 1, numCrafts do
+            local name, _, craftType = GetCraftInfo(i)
+            if name and craftType ~= "header" and string.find(spellName, name, 1, true) then
+                CraftFrame_SetSelection(i)
+                return
+            end
+        end
+    else
+        -- Expand all collapsed headers so recipes are visible
+        for i = GetNumTradeSkills(), 1, -1 do
+            local _, skillType, _, isExpanded = GetTradeSkillInfo(i)
+            if skillType == "header" and not isExpanded then
+                ExpandTradeSkillSubClass(i)
+            end
+        end
 
-    -- Fallback: try matching the other way (spellName contains recipe name)
-    for i = 1, numSkills do
-        local name, skillType = GetTradeSkillInfo(i)
-        if name and skillType ~= "header" and string.find(spellName, name, 1, true) then
-            SelectTradeSkill(i)
-            return
+        local numSkills = GetNumTradeSkills()
+        if not numSkills then return end
+
+        for i = 1, numSkills do
+            local name, skillType = GetTradeSkillInfo(i)
+            if name and skillType ~= "header" and string.find(name, spellName, 1, true) then
+                TradeSkillFrame_SetSelection(i)
+                return
+            end
+        end
+        -- Fallback: reverse match
+        for i = 1, numSkills do
+            local name, skillType = GetTradeSkillInfo(i)
+            if name and skillType ~= "header" and string.find(spellName, name, 1, true) then
+                TradeSkillFrame_SetSelection(i)
+                return
+            end
         end
     end
 end

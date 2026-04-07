@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.14.0
+
+### New Features
+- **UI scale setting** - New slider in Settings (50%-200%) that uniformly scales all Primal Ledger windows — text, icons, padding, and controls
+- **Profession icons in tracker** - Each cooldown row in the tracker window now shows the profession icon next to the craft name
+- **Clickable "Ready!" in tracker** - Left-click opens the profession window and selects the recipe, right-click opens the profession window (current character only)
+
+### Improvements
+- **Tracker title** - Renamed from "Primal Ledger" to "Cooldowns"
+- **Recipe selection fix** - Left-clicking "Ready!" now properly selects the recipe in the profession UI, expands collapsed headers, and supports enchanting via the Craft API
+- **Minimum window width** - Main window can no longer be resized narrower than the tab bar
+- **Fixed "Show in combat" setting** - Tracker now properly hides when entering combat with the setting unchecked; fixed both a boolean storage issue with Classic's `GetChecked()` API and a timing issue where `InCombatLockdown()` wasn't set yet when the combat event fired
+
+---
+
+## v1.13.1
+
+### Fixes
+- **Fixed tracker crash on first login** - The "No tracked cooldowns" placeholder created a row with only `charText`, so when cooldown data arrived the existing row was reused but was missing `craftText` and `cdText`, causing a nil index error. Row fields are now created individually if missing.
+
+---
+
 ## v1.13.0
 
 ### New Features

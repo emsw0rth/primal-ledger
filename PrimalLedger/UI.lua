@@ -69,6 +69,21 @@ local COLORS = {
     btnBgHover =    { 0.80, 0.20, 0.20, 0.9 },       -- red button hover
 }
 
+-- Apply UI scale to all PrimalLedger frames
+function PL:ApplyUIScale()
+    local scale = (self.db and self.db.settings.uiScale or 100) / 100
+    if self.mainFrame then
+        self.mainFrame:SetScale(scale)
+    end
+    if self.trackerFrame then
+        self.trackerFrame:SetScale(scale)
+        -- Lock button is parented to UIParent, scale it separately
+        if self.trackerFrame.lockBtn then
+            self.trackerFrame.lockBtn:SetScale(scale)
+        end
+    end
+end
+
 -- Frame dimensions
 local FRAME_WIDTH = 300   -- Default width
 local FRAME_HEIGHT = 400  -- Default height
@@ -297,6 +312,17 @@ function PL:CreateMainFrame()
     frame.tabBar = tabBar
     frame.selectedTab = 1
 
+    -- Calculate total tab bar width for minimum window size
+    local totalTabWidth = 0
+    for i, tab in ipairs(frame.tabs) do
+        totalTabWidth = totalTabWidth + tab:GetWidth()
+        if i > 1 then
+            totalTabWidth = totalTabWidth + 8 -- tab spacing
+        end
+    end
+    frame.tabBarWidth = totalTabWidth + PADDING * 2
+    frame:SetResizeBounds(math.max(MIN_WIDTH, frame.tabBarWidth), MIN_HEIGHT)
+
     -- Tab separator line
     local tabSeparator = frame:CreateTexture(nil, "ARTWORK")
     tabSeparator:SetHeight(1)
@@ -385,6 +411,7 @@ function PL:CreateMainFrame()
     end)
 
     self.mainFrame = frame
+    self:ApplyUIScale()
 
     -- Select first tab by default
     self:SelectTab(1)
@@ -581,7 +608,8 @@ function PL:UpdateMainFrame()
         end
     end
     local headerWidth = self.mainFrame.charName:GetStringWidth() + (iconCount * 20) + PADDING * 3 + 16
-    local minWidth = math.max(MIN_WIDTH, headerWidth)
+    local tabBarWidth = self.mainFrame.tabBarWidth or 0
+    local minWidth = math.max(MIN_WIDTH, headerWidth, tabBarWidth)
     self.mainFrame:SetResizeBounds(minWidth, MIN_HEIGHT)
 
     -- If current width is less than new minimum, resize the frame
@@ -1170,7 +1198,7 @@ function PL:UpdateMainFrame()
         combatCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
         combatCheck:SetChecked(self.db.settings.trackerShowInCombat ~= false)
         combatCheck:SetScript("OnClick", function(self)
-            PL.db.settings.trackerShowInCombat = self:GetChecked()
+            PL.db.settings.trackerShowInCombat = self:GetChecked() and true or false
             PL:EvaluateTrackerVisibility()
         end)
         combatCheck:Show()
@@ -1201,7 +1229,7 @@ function PL:UpdateMainFrame()
         groupCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
         groupCheck:SetChecked(self.db.settings.trackerShowInGroup ~= false)
         groupCheck:SetScript("OnClick", function(self)
-            PL.db.settings.trackerShowInGroup = self:GetChecked()
+            PL.db.settings.trackerShowInGroup = self:GetChecked() and true or false
             PL:EvaluateTrackerVisibility()
         end)
         groupCheck:Show()
@@ -1296,6 +1324,53 @@ function PL:UpdateMainFrame()
         end)
         opacitySlider:Show()
         table.insert(self.mainFrame.settingsWidgets, opacitySlider)
+
+        yOffset = yOffset - 36
+
+        -- UI scale slider
+        local scaleLabel = self.mainFrame.settingsScaleLabel
+        if not scaleLabel then
+            scaleLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsScaleLabel = scaleLabel
+        end
+        scaleLabel:ClearAllPoints()
+        scaleLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        scaleLabel:SetTextColor(unpack(COLORS.textNormal))
+        scaleLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, scaleLabel)
+
+        local currentScale = self.db.settings.uiScale or 100
+        scaleLabel:SetText("UI scale: " .. currentScale .. "%")
+
+        yOffset = yOffset - 20
+
+        local scaleSlider = self.mainFrame.settingsScaleSlider
+        if not scaleSlider then
+            scaleSlider = CreateFrame("Slider", "PrimalLedgerScaleSlider", content, "OptionsSliderTemplate")
+            scaleSlider:SetSize(180, 16)
+            scaleSlider:SetMinMaxValues(50, 200)
+            scaleSlider:SetValueStep(5)
+            scaleSlider:SetObeyStepOnDrag(true)
+            self.mainFrame.settingsScaleSlider = scaleSlider
+
+            scaleSlider.Low = scaleSlider.Low or _G[scaleSlider:GetName() .. "Low"]
+            scaleSlider.High = scaleSlider.High or _G[scaleSlider:GetName() .. "High"]
+            scaleSlider.Text = scaleSlider.Text or _G[scaleSlider:GetName() .. "Text"]
+            if scaleSlider.Low then scaleSlider.Low:SetText("50%") scaleSlider.Low:SetTextColor(unpack(COLORS.textDim)) end
+            if scaleSlider.High then scaleSlider.High:SetText("200%") scaleSlider.High:SetTextColor(unpack(COLORS.textDim)) end
+            if scaleSlider.Text then scaleSlider.Text:SetText("") end
+        end
+        scaleSlider:ClearAllPoints()
+        scaleSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        scaleSlider:SetValue(currentScale)
+        scaleSlider:SetScript("OnValueChanged", function(self, value)
+            value = math.floor(value + 0.5)
+            PL.db.settings.uiScale = value
+            scaleLabel:SetText("UI scale: " .. value .. "%")
+            PL:ApplyUIScale()
+        end)
+        scaleSlider:Show()
+        table.insert(self.mainFrame.settingsWidgets, scaleSlider)
 
         yOffset = yOffset - 36
 
@@ -1493,7 +1568,7 @@ function PL:CreateTrackerWindow()
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", TRACKER_PADDING, -TRACKER_PADDING)
-    title:SetText("Primal Ledger")
+    title:SetText("Cooldowns")
     title:SetTextColor(unpack(COLORS.accent))
 
     -- Close button (top-right, hidden when locked)
@@ -1622,6 +1697,7 @@ function PL:CreateTrackerWindow()
     end)
 
     self:ApplyTrackerLock()
+    self:ApplyUIScale()
     self:UpdateTrackerWindow()
 end
 
@@ -1661,6 +1737,8 @@ function PL:UpdateTrackerWindow()
         if row.charText then row.charText:Hide() end
         if row.craftText then row.craftText:Hide() end
         if row.cdText then row.cdText:Hide() end
+        if row.cdBtn then row.cdBtn:Hide() end
+        if row.profIcon then row.profIcon:Hide() end
     end
     for _, sep in ipairs(frame.separators) do
         sep:Hide()
@@ -1675,10 +1753,12 @@ function PL:UpdateTrackerWindow()
             local cooldowns = self:GetCharacterCooldowns(charInfo.key)
             for _, cd in ipairs(cooldowns) do
                 table.insert(entries, {
+                    charKey = charInfo.key,
                     charName = charInfo.data.name,
                     charClass = charInfo.data.class,
                     craftName = cd.name,
                     remaining = cd.remaining,
+                    cdType = cd.type,
                 })
             end
         end
@@ -1707,12 +1787,36 @@ function PL:UpdateTrackerWindow()
     for i, entry in ipairs(entries) do
         local row = frame.rows[i]
         if not row then
-            row = {
-                charText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
-                craftText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
-                cdText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
-            }
+            row = {}
             frame.rows[i] = row
+        end
+        if not row.charText then
+            row.charText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        end
+        if not row.profIcon then
+            row.profIcon = frame:CreateTexture(nil, "ARTWORK")
+            row.profIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        end
+        if not row.craftText then
+            row.craftText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        end
+        if not row.cdText then
+            row.cdText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        end
+        if not row.cdBtn then
+            row.cdBtn = CreateFrame("Button", nil, frame)
+            row.cdBtn:SetHeight(ROW_H)
+            row.cdBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        end
+
+        -- Set profession icon for this cooldown
+        local profession = self.COOLDOWN_TO_PROFESSION and self.COOLDOWN_TO_PROFESSION[entry.cdType]
+        local iconPath = profession and PROFESSION_ICONS[profession]
+        if iconPath then
+            row.profIcon:SetTexture(iconPath)
+            row.profIcon:Show()
+        else
+            row.profIcon:Hide()
         end
 
         local classColor = CLASS_COLORS[entry.charClass] or { r = 1, g = 1, b = 1 }
@@ -1742,11 +1846,14 @@ function PL:UpdateTrackerWindow()
     end
 
     -- Layout
-    local totalWidth = PAD + colCharW + COL_GAP + colCraftW + COL_GAP + colCdW + PAD
+    local ICON_SIZE = ROW_H - 2
+    local ICON_GAP = 3
+    local totalWidth = PAD + colCharW + COL_GAP + ICON_SIZE + ICON_GAP + colCraftW + COL_GAP + colCdW + PAD
     totalWidth = math.max(totalWidth, 160)
 
     local col1X = PAD
-    local col2X = PAD + colCharW + COL_GAP
+    local iconX = PAD + colCharW + COL_GAP
+    local col2X = iconX + ICON_SIZE + ICON_GAP
 
     -- Set minimum resize bounds to fit content width
     frame:SetResizeBounds(totalWidth, 60)
@@ -1788,6 +1895,12 @@ function PL:UpdateTrackerWindow()
         row.charText:SetPoint("TOPLEFT", frame, "TOPLEFT", col1X, yOffset)
         row.charText:Show()
 
+        if row.profIcon:IsShown() then
+            row.profIcon:SetSize(ICON_SIZE, ICON_SIZE)
+            row.profIcon:ClearAllPoints()
+            row.profIcon:SetPoint("TOPLEFT", frame, "TOPLEFT", iconX, yOffset - 1)
+        end
+
         row.craftText:ClearAllPoints()
         row.craftText:SetPoint("TOPLEFT", frame, "TOPLEFT", col2X, yOffset)
         row.craftText:Show()
@@ -1795,6 +1908,36 @@ function PL:UpdateTrackerWindow()
         row.cdText:ClearAllPoints()
         row.cdText:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
         row.cdText:Show()
+
+        -- Make "Ready!" clickable for the current character
+        local isCurrentChar = (entry.charKey == self:GetCharacterKey())
+        if isCurrentChar and entry.remaining ~= nil and entry.remaining <= 0 then
+            local cdType = entry.cdType
+            row.cdBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
+            row.cdBtn:SetWidth(row.cdText:GetStringWidth() + 4)
+            row.cdBtn:SetScript("OnClick", function(_, button)
+                if button == "LeftButton" then
+                    PL:OpenCraftingSpell(cdType)
+                elseif button == "RightButton" then
+                    PL:SelectCraftingSpell(cdType)
+                end
+            end)
+            row.cdBtn:SetScript("OnEnter", function()
+                row.cdText:SetTextColor(unpack(COLORS.readyHover))
+                GameTooltip:SetOwner(row.cdBtn, "ANCHOR_RIGHT")
+                GameTooltip:AddLine("Ready to craft!")
+                GameTooltip:AddLine("|cffffffffLeft-click:|r Open profession and select recipe", 0.8, 0.8, 0.8)
+                GameTooltip:AddLine("|cffffffffRight-click:|r Open profession window", 0.8, 0.8, 0.8)
+                GameTooltip:Show()
+            end)
+            row.cdBtn:SetScript("OnLeave", function()
+                row.cdText:SetTextColor(0.2, 0.8, 0.2) -- back to ready green
+                GameTooltip:Hide()
+            end)
+            row.cdBtn:Show()
+        else
+            row.cdBtn:Hide()
+        end
 
         yOffset = yOffset - ROW_H
 
@@ -1842,16 +1985,16 @@ function PL:ShouldTrackerBeVisible()
     if self.db.settings.showTrackerWindow == false then return false end
     if self.trackerManuallyHidden then return false end
 
-    local inCombat = InCombatLockdown()
+    local inCombat = self.inCombat or InCombatLockdown()
     local groupCount = (GetNumGroupMembers or GetNumRaidMembers or function() return 0 end)()
     local partyCount = (GetNumSubgroupMembers or GetNumPartyMembers or function() return 0 end)()
     local inGroup = groupCount > 0 or partyCount > 0
 
-    -- Hide in combat if "show in combat" is unchecked (regardless of group setting)
+    -- Hide in combat if "show in combat" is unchecked (default true)
     if self.db.settings.trackerShowInCombat == false and inCombat then
         return false
     end
-    -- Hide in group if "show in party/raid" is unchecked
+    -- Hide in group if "show in party/raid" is unchecked (default true)
     if self.db.settings.trackerShowInGroup == false and inGroup then
         return false
     end

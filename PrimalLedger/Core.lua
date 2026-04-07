@@ -4,7 +4,7 @@
 local addonName, PL = ...
 
 -- Addon namespace
-PL.version = "1.13.0"
+PL.version = "1.14.0"
 PL.addonLoaded = false
 PL.playerLoggedIn = false
 
@@ -45,8 +45,13 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         PL:OnBagUpdate()
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         PL:OnSpellCooldownUpdate()
-    elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED"
-        or event == "GROUP_ROSTER_UPDATE" then
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        PL.inCombat = true
+        PL:EvaluateTrackerVisibility()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        PL.inCombat = false
+        PL:EvaluateTrackerVisibility()
+    elseif event == "GROUP_ROSTER_UPDATE" then
         PL:EvaluateTrackerVisibility()
     end
 end)

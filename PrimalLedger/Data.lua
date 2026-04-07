@@ -14,6 +14,9 @@ local defaults = {
         trackerMode = "static",
         trackerPosition = nil,
         showSeconds = false,
+        trackerShowInCombat = true,
+        trackerShowInGroup = true,
+        uiScale = 100,
         disabledCooldowns = {},
     }
 }
