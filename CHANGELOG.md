@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.15.0
+
+### New Features
+- **Group shared cooldowns** - New setting to group all alchemy transmute cooldowns (Primal Might, diamonds, elemental transmutes) into a single "Transmutes" row per character in the tracker window
+- **Custom tracker title** - New input field in Settings to set a custom tracker window title, with a checkbox to show/hide the title entirely
+- **Profession icons in Cooldowns tab** - Each cooldown row now shows the profession icon next to the craft name, matching the tracker window
+
+### Improvements
+- **No transparency by default** - All UI elements now default to fully opaque; only the tracker window supports user-controlled transparency via the slider
+- **Tracker transparency range** - Slider now goes from 0% to 100% (was 10%-100%), allowing fully transparent tracker backgrounds
+- **Tracker UI scale** - UI scale setting now only affects the tracker window (renamed from "UI scale" to "Tracker UI scale")
+- **Overview tab alignment** - Character names and profession icons are now displayed in an aligned table layout
+- **Cooldowns tab text colors** - Craft names, timers, and status text now match the tracker window's color scheme
+- **Streamlined header** - Removed the "Character | Professions" bar; tabs now sit directly below the header image
+- **Auto-fit window height** - Main window automatically sizes to fit content when not manually resized
+
+---
+
 ## v1.14.0
 
 ### New Features

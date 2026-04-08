@@ -50,31 +50,28 @@ local CLASS_COLORS = {
 
 -- Color palette (Outland / Dark Portal theme)
 local COLORS = {
-    bg =            { 0.08, 0.05, 0.03, 0.92 },    -- dark brown-black
-    border =        { 0.35, 0.22, 0.10, 1 },        -- dark bronze
-    separator =     { 0.40, 0.30, 0.20, 1 },        -- warm brown
-    separatorFaint ={ 0.30, 0.22, 0.15, 0.8 },      -- faint brown
-    highlight =     { 0.80, 0.50, 0.20, 0.08 },     -- warm highlight
-    accent =        { 0.85, 0.45, 0.15 },            -- orange (title, headers, links)
-    accentHover =   { 1.00, 0.60, 0.20 },            -- brighter orange hover
-    accentMuted =   { 0.75, 0.55, 0.30 },            -- muted orange
-    textNormal =    { 0.85, 0.80, 0.70 },            -- warm off-white
-    textDim =       { 0.60, 0.50, 0.35 },            -- warm gray
-    textFaint =     { 0.45, 0.38, 0.28 },            -- faint warm gray
-    ready =         { 0.20, 0.80, 0.20 },            -- fel green
-    readyHover =    { 0.40, 1.00, 0.40 },            -- lighter fel green
-    closeHover =    { 0.90, 0.40, 0.10 },            -- orange-red
-    tabSelectedBg = { 0.15, 0.10, 0.05, 1 },         -- dark warm bg
-    btnBg =         { 0.60, 0.15, 0.15, 0.8 },       -- red button
-    btnBgHover =    { 0.80, 0.20, 0.20, 0.9 },       -- red button hover
+    bg =            { 0.08, 0.05, 0.03, 1 },         -- dark brown-black
+    border =        { 0.35, 0.22, 0.10, 1 },         -- dark bronze
+    separator =     { 0.40, 0.30, 0.20, 1 },         -- warm brown
+    separatorFaint ={ 0.30, 0.22, 0.15, 1 },         -- faint brown
+    highlight =     { 0.80, 0.50, 0.20, 0.08 },      -- warm highlight
+    accent =        { 0.85, 0.45, 0.15 },             -- orange (title, headers, links)
+    accentHover =   { 1.00, 0.60, 0.20 },             -- brighter orange hover
+    accentMuted =   { 0.75, 0.55, 0.30 },             -- muted orange
+    textNormal =    { 0.85, 0.80, 0.70 },             -- warm off-white
+    textDim =       { 0.60, 0.50, 0.35 },             -- warm gray
+    textFaint =     { 0.45, 0.38, 0.28 },             -- faint warm gray
+    ready =         { 0.20, 0.80, 0.20 },             -- fel green
+    readyHover =    { 0.40, 1.00, 0.40 },             -- lighter fel green
+    closeHover =    { 0.90, 0.40, 0.10 },             -- orange-red
+    tabSelectedBg = { 0.15, 0.10, 0.05, 1 },          -- dark warm bg
+    btnBg =         { 0.60, 0.15, 0.15, 1 },          -- red button
+    btnBgHover =    { 0.80, 0.20, 0.20, 1 },          -- red button hover
 }
 
--- Apply UI scale to all PrimalLedger frames
+-- Apply UI scale to the tracker window only
 function PL:ApplyUIScale()
     local scale = (self.db and self.db.settings.uiScale or 100) / 100
-    if self.mainFrame then
-        self.mainFrame:SetScale(scale)
-    end
     if self.trackerFrame then
         self.trackerFrame:SetScale(scale)
         -- Lock button is parented to UIParent, scale it separately
@@ -104,8 +101,8 @@ end
 function PL:ApplyTrackerAlpha()
     if self.trackerFrame then
         local alpha = self:GetTrackerAlpha()
-        self.trackerFrame:SetBackdropColor(0.08, 0.05, 0.03, 0.70 * alpha)
-        self.trackerFrame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70 * alpha)
+        self.trackerFrame:SetBackdropColor(0.08, 0.05, 0.03, alpha)
+        self.trackerFrame:SetBackdropBorderColor(0.35, 0.22, 0.10, alpha)
     end
 end
 
@@ -177,75 +174,11 @@ function PL:CreateMainFrame()
     titleSeparator:SetPoint("TOPRIGHT", headerImage, "BOTTOMRIGHT", -PADDING, 0)
     titleSeparator:SetColorTexture(unpack(COLORS.separator))
 
-    -- Character info header
-    local charHeader = CreateFrame("Frame", nil, frame)
-    charHeader:SetHeight(ROW_HEIGHT)
-    charHeader:SetPoint("TOPLEFT", titleSeparator, "BOTTOMLEFT", 0, -6)
-    charHeader:SetPoint("TOPRIGHT", titleSeparator, "BOTTOMRIGHT", 0, -6)
-
-    local charName = charHeader:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    charName:SetPoint("LEFT", charHeader, "LEFT", 0, 0)
-    charName:SetJustifyH("LEFT")
-
-    -- Create profession icon frames
-    local iconSize = 16
-    local iconSpacing = 4
-    local professionIcons = {}
-    local professionOrder = {
-        "alchemy", "blacksmithing", "enchanting", "engineering", "herbalism",
-        "jewelcrafting", "leatherworking", "mining", "skinning", "tailoring",
-        "cooking", "fishing", "firstAid"
-    }
-
-    for i, profKey in ipairs(professionOrder) do
-        local iconFrame = CreateFrame("Frame", nil, charHeader)
-        iconFrame:SetSize(iconSize, iconSize)
-
-        local icon = iconFrame:CreateTexture(nil, "ARTWORK")
-        icon:SetAllPoints()
-        icon:SetTexture(PROFESSION_ICONS[profKey])
-        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) -- Trim icon borders
-
-        iconFrame.icon = icon
-        iconFrame.profKey = profKey
-        iconFrame:Hide()
-
-        -- Tooltip on hover
-        iconFrame:EnableMouse(true)
-        iconFrame:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(self.profName or profKey)
-            if self.profLevel then
-                GameTooltip:AddLine("Level: " .. self.profLevel, 1, 1, 1)
-            end
-            GameTooltip:Show()
-        end)
-        iconFrame:SetScript("OnLeave", function()
-            GameTooltip:Hide()
-        end)
-
-        professionIcons[profKey] = iconFrame
-    end
-
-    frame.charHeader = charHeader
-    frame.charName = charName
-    frame.professionIcons = professionIcons
-    frame.professionOrder = professionOrder
-
-    -- Header separator line
-    local headerSeparator = frame:CreateTexture(nil, "ARTWORK")
-    headerSeparator:SetHeight(1)
-    headerSeparator:SetPoint("TOPLEFT", charHeader, "BOTTOMLEFT", 0, -6)
-    headerSeparator:SetPoint("TOPRIGHT", charHeader, "BOTTOMRIGHT", 0, -6)
-    headerSeparator:SetColorTexture(unpack(COLORS.separator))
-
-    frame.headerSeparator = headerSeparator
-
     -- Tab bar
     local tabBar = CreateFrame("Frame", nil, frame)
     tabBar:SetHeight(22)
-    tabBar:SetPoint("TOPLEFT", headerSeparator, "BOTTOMLEFT", 0, -4)
-    tabBar:SetPoint("TOPRIGHT", headerSeparator, "BOTTOMRIGHT", 0, -4)
+    tabBar:SetPoint("TOPLEFT", titleSeparator, "BOTTOMLEFT", 0, -4)
+    tabBar:SetPoint("TOPRIGHT", titleSeparator, "BOTTOMRIGHT", 0, -4)
 
     -- Tab button creation helper
     local function CreateTab(parent, name, tabIndex)
@@ -544,81 +477,10 @@ function PL:UpdateMainFrame()
     local rowIndex = 0
     local charCount = 0
 
-    -- Update character header
-    local currentCharData = self.db.characters[currentCharKey]
-    if currentCharData then
-        local classColor = CLASS_COLORS[currentCharData.class] or { r = 1, g = 1, b = 1 }
-        self.mainFrame.charName:SetText(currentCharData.name)
-        self.mainFrame.charName:SetTextColor(classColor.r, classColor.g, classColor.b)
-
-        -- Display profession icons
-        local iconSize = 16
-        local iconSpacing = 4
-        local lastIcon = nil
-        local iconCount = 0
-
-        local profNames = {
-            alchemy = "Alchemy", blacksmithing = "Blacksmithing", enchanting = "Enchanting",
-            engineering = "Engineering", herbalism = "Herbalism", jewelcrafting = "Jewelcrafting",
-            leatherworking = "Leatherworking", mining = "Mining", skinning = "Skinning",
-            tailoring = "Tailoring", cooking = "Cooking", fishing = "Fishing", firstAid = "First Aid"
-        }
-
-        -- Hide all icons first
-        for _, iconFrame in pairs(self.mainFrame.professionIcons) do
-            iconFrame:Hide()
-        end
-
-        -- Show and position icons for known professions
-        if currentCharData.professions then
-            local p = currentCharData.professions
-            for _, profKey in ipairs(self.mainFrame.professionOrder) do
-                local value = p[profKey]
-                if value and value ~= false and (type(value) ~= "number" or value > 0) then
-                    local iconFrame = self.mainFrame.professionIcons[profKey]
-                    iconFrame.profName = profNames[profKey]
-                    iconFrame.profLevel = type(value) == "number" and value or nil
-
-                    if lastIcon then
-                        iconFrame:SetPoint("LEFT", lastIcon, "RIGHT", iconSpacing, 0)
-                    else
-                        iconFrame:SetPoint("LEFT", self.mainFrame.charName, "RIGHT", 8, 0)
-                    end
-
-                    iconFrame:Show()
-                    lastIcon = iconFrame
-                    iconCount = iconCount + 1
-                end
-            end
-        end
-    else
-        self.mainFrame.charName:SetText("Unknown")
-        self.mainFrame.charName:SetTextColor(unpack(COLORS.textFaint))
-        -- Hide all icons
-        for _, iconFrame in pairs(self.mainFrame.professionIcons) do
-            iconFrame:Hide()
-        end
-    end
-
-    -- Adjust minimum width based on header content
-    local iconCount = 0
-    for _, iconFrame in pairs(self.mainFrame.professionIcons) do
-        if iconFrame:IsShown() then
-            iconCount = iconCount + 1
-        end
-    end
-    local headerWidth = self.mainFrame.charName:GetStringWidth() + (iconCount * 20) + PADDING * 3 + 16
+    -- Adjust minimum width based on tab bar
     local tabBarWidth = self.mainFrame.tabBarWidth or 0
-    local minWidth = math.max(MIN_WIDTH, headerWidth, tabBarWidth)
+    local minWidth = math.max(MIN_WIDTH, tabBarWidth)
     self.mainFrame:SetResizeBounds(minWidth, MIN_HEIGHT)
-
-    -- If current width is less than new minimum, resize the frame
-    if self.mainFrame:GetWidth() < minWidth then
-        self.mainFrame:SetWidth(minWidth)
-        if self.mainFrame.content then
-            self.mainFrame.content:SetWidth(minWidth - 40)
-        end
-    end
 
     -- Clear existing rows
     for _, row in pairs(self.mainFrame.rows) do
@@ -643,6 +505,13 @@ function PL:UpdateMainFrame()
         if row.separatorText then
             row.separatorText:Hide()
         end
+        -- Reset text field positioning to default (left-aligned at row start)
+        row.text:ClearAllPoints()
+        row.text:SetPoint("LEFT", row, "LEFT", 0, 0)
+        -- Reset time field positioning to default (right-aligned)
+        row.time:ClearAllPoints()
+        row.time:SetPoint("RIGHT", row.timeBtn, "RIGHT", 0, 0)
+        row.time:SetJustifyH("RIGHT")
         -- Clear item link scripts
         row:SetScript("OnMouseUp", nil)
         row:SetScript("OnEnter", function(self) self.highlight:Show() end)
@@ -663,10 +532,29 @@ function PL:UpdateMainFrame()
 
     local selectedTab = self.mainFrame.selectedTab or 1
 
-    -- OVERVIEW TAB: Show all characters with their professions
+    -- OVERVIEW TAB: Show all characters with their professions (icons aligned in columns)
     if selectedTab == 1 then
+        -- First pass: measure the widest character name
+        local nameWidth = 0
         for _, charInfo in ipairs(characters) do
-            local charKey = charInfo.key
+            rowIndex = rowIndex + 1
+            local charRow = self.mainFrame.rows[rowIndex]
+            if not charRow then
+                charRow = CreateRow(content, rowIndex)
+                self.mainFrame.rows[rowIndex] = charRow
+            end
+            charRow.text:SetText(charInfo.data.name)
+            local w = charRow.text:GetStringWidth()
+            if w > nameWidth then nameWidth = w end
+        end
+        local iconStartX = nameWidth + 10
+        local iconSize = 14
+        local iconSpacing = 3
+
+        -- Second pass: position rows and icons
+        rowIndex = 0
+        charCount = 0
+        for _, charInfo in ipairs(characters) do
             local charData = charInfo.data
             charCount = charCount + 1
 
@@ -683,12 +571,9 @@ function PL:UpdateMainFrame()
                     separator:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(rowIndex * ROW_HEIGHT) - 2)
                 end
                 separator:Show()
-
-                -- Add extra spacing for separator
                 rowIndex = rowIndex + 0.5
             end
 
-            -- Character row
             rowIndex = rowIndex + 1
             local charRow = self.mainFrame.rows[rowIndex]
             if not charRow then
@@ -696,21 +581,17 @@ function PL:UpdateMainFrame()
                 self.mainFrame.rows[rowIndex] = charRow
             end
 
-            -- Update row position
             charRow:ClearAllPoints()
             charRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
             charRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
 
-            -- Set character name with class color
             local classColor = CLASS_COLORS[charData.class] or { r = 1, g = 1, b = 1 }
             charRow.text:SetTextColor(classColor.r, classColor.g, classColor.b)
             charRow.text:SetText(charData.name)
 
-            -- Show profession icons
+            -- Show profession icons aligned to a fixed start position
             local cp = charData.professions or {}
-            local iconSpacing = 3
-            local lastIcon = nil
-
+            local iconIndex = 0
             for _, profKey in ipairs(PROFESSION_ORDER) do
                 local value = cp[profKey]
                 if value and value ~= false and (type(value) ~= "number" or value > 0) then
@@ -719,14 +600,9 @@ function PL:UpdateMainFrame()
                     iconFrame.profLevel = type(value) == "number" and value or nil
 
                     iconFrame:ClearAllPoints()
-                    if lastIcon then
-                        iconFrame:SetPoint("LEFT", lastIcon, "RIGHT", iconSpacing, 0)
-                    else
-                        iconFrame:SetPoint("LEFT", charRow.text, "RIGHT", 6, 0)
-                    end
-
+                    iconFrame:SetPoint("TOPLEFT", charRow, "TOPLEFT", iconStartX + iconIndex * (iconSize + iconSpacing), -1)
                     iconFrame:Show()
-                    lastIcon = iconFrame
+                    iconIndex = iconIndex + 1
                 end
             end
 
@@ -815,16 +691,29 @@ function PL:UpdateMainFrame()
                     cdRow:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((rowIndex - 1) * ROW_HEIGHT))
                     cdRow:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((rowIndex - 1) * ROW_HEIGHT))
 
-                    cdRow.text:SetTextColor(unpack(COLORS.textNormal))
-                    cdRow.text:SetText("  " .. cd.name)
+                    -- Show profession icon next to cooldown name
+                    local profession = self.COOLDOWN_TO_PROFESSION and self.COOLDOWN_TO_PROFESSION[cd.type]
+                    if profession and cdRow.profIcons[profession] then
+                        local iconFrame = cdRow.profIcons[profession]
+                        iconFrame.profName = PROFESSION_NAMES[profession]
+                        iconFrame.profLevel = nil
+                        iconFrame:ClearAllPoints()
+                        iconFrame:SetPoint("LEFT", cdRow, "LEFT", 4, 0)
+                        iconFrame:Show()
+                    end
 
-                    -- Color the time based on ready status
+                    cdRow.text:SetTextColor(0.85, 0.78, 0.65) -- #d9c6a5
+                    cdRow.text:ClearAllPoints()
+                    cdRow.text:SetPoint("LEFT", cdRow, "LEFT", 22, 0)
+                    cdRow.text:SetText(cd.name)
+
+                    -- Color the time based on ready status (matching tracker window)
                     if cd.remaining == nil then
-                        cdRow.time:SetTextColor(unpack(COLORS.textFaint))
-                        cdRow.time:SetText("--")
+                        cdRow.time:SetTextColor(0.60, 0.53, 0.47) -- #998877
+                        cdRow.time:SetText("Unknown")
                         cdRow.timeBtn.isClickable = false
                     elseif cd.remaining <= 0 then
-                        cdRow.time:SetTextColor(unpack(COLORS.ready))
+                        cdRow.time:SetTextColor(0.20, 0.80, 0.20) -- #33cc33
                         cdRow.time:SetText("Ready!")
 
                         -- Make clickable only for current character
@@ -842,7 +731,7 @@ function PL:UpdateMainFrame()
                             cdRow.timeBtn.isClickable = false
                         end
                     else
-                        cdRow.time:SetTextColor(1, 0.82, 0)
+                        cdRow.time:SetTextColor(0.87, 0.80, 0.60) -- #ddcc99
                         cdRow.time:SetText(cd.formattedTime)
                         cdRow.timeBtn.isClickable = false
                     end
@@ -1249,7 +1138,7 @@ function PL:UpdateMainFrame()
 
         yOffset = yOffset - 26
 
-        -- Show seconds checkbox (indented)
+        -- Show seconds checkbox (top-level)
         local secondsCheck = self.mainFrame.settingsSecondsCheck
         if not secondsCheck then
             secondsCheck = CreateFrame("CheckButton", "PrimalLedgerSecondsCheck", content, "UICheckButtonTemplate")
@@ -1257,7 +1146,7 @@ function PL:UpdateMainFrame()
             self.mainFrame.settingsSecondsCheck = secondsCheck
         end
         secondsCheck:ClearAllPoints()
-        secondsCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
+        secondsCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
         secondsCheck:SetChecked(self.db.settings.showSeconds == true)
         secondsCheck:SetScript("OnClick", function(self)
             PL.db.settings.showSeconds = self:GetChecked()
@@ -1276,6 +1165,130 @@ function PL:UpdateMainFrame()
         secondsLabel:SetTextColor(unpack(COLORS.textNormal))
         secondsLabel:Show()
         table.insert(self.mainFrame.settingsWidgets, secondsLabel)
+
+        yOffset = yOffset - 26
+
+        -- Group shared cooldowns checkbox (top-level)
+        local groupCDCheck = self.mainFrame.settingsGroupCDCheck
+        if not groupCDCheck then
+            groupCDCheck = CreateFrame("CheckButton", "PrimalLedgerGroupCDCheck", content, "UICheckButtonTemplate")
+            groupCDCheck:SetSize(24, 24)
+            self.mainFrame.settingsGroupCDCheck = groupCDCheck
+        end
+        groupCDCheck:ClearAllPoints()
+        groupCDCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        groupCDCheck:SetChecked(self.db.settings.groupSharedCooldowns == true)
+        groupCDCheck:SetScript("OnClick", function(self)
+            PL.db.settings.groupSharedCooldowns = self:GetChecked() and true or false
+        end)
+        groupCDCheck:Show()
+        table.insert(self.mainFrame.settingsWidgets, groupCDCheck)
+
+        local groupCDLabel = self.mainFrame.settingsGroupCDLabel
+        if not groupCDLabel then
+            groupCDLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsGroupCDLabel = groupCDLabel
+        end
+        groupCDLabel:ClearAllPoints()
+        groupCDLabel:SetPoint("LEFT", groupCDCheck, "RIGHT", 4, 0)
+        groupCDLabel:SetText("Group shared cooldowns")
+        groupCDLabel:SetTextColor(unpack(COLORS.textNormal))
+        groupCDLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, groupCDLabel)
+
+        yOffset = yOffset - 26
+
+        -- Show tracker window title checkbox (top-level)
+        local titleCheck = self.mainFrame.settingsTitleCheck
+        if not titleCheck then
+            titleCheck = CreateFrame("CheckButton", "PrimalLedgerTitleCheck", content, "UICheckButtonTemplate")
+            titleCheck:SetSize(24, 24)
+            self.mainFrame.settingsTitleCheck = titleCheck
+        end
+        titleCheck:ClearAllPoints()
+        titleCheck:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        titleCheck:SetChecked(self.db.settings.showTrackerTitle ~= false)
+        titleCheck:SetScript("OnClick", function(self)
+            PL.db.settings.showTrackerTitle = self:GetChecked() and true or false
+            PL:UpdateTrackerWindow()
+        end)
+        titleCheck:Show()
+        table.insert(self.mainFrame.settingsWidgets, titleCheck)
+
+        local titleCheckLabel = self.mainFrame.settingsTitleCheckLabel
+        if not titleCheckLabel then
+            titleCheckLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsTitleCheckLabel = titleCheckLabel
+        end
+        titleCheckLabel:ClearAllPoints()
+        titleCheckLabel:SetPoint("LEFT", titleCheck, "RIGHT", 4, 0)
+        titleCheckLabel:SetText("Show tracker window title")
+        titleCheckLabel:SetTextColor(unpack(COLORS.textNormal))
+        titleCheckLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, titleCheckLabel)
+
+        yOffset = yOffset - 28
+
+        -- Custom tracker window title input
+        local customTitleLabel = self.mainFrame.settingsCustomTitleLabel
+        if not customTitleLabel then
+            customTitleLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsCustomTitleLabel = customTitleLabel
+        end
+        customTitleLabel:ClearAllPoints()
+        customTitleLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        customTitleLabel:SetText("Custom tracker window title")
+        customTitleLabel:SetTextColor(unpack(COLORS.textNormal))
+        customTitleLabel:Show()
+        table.insert(self.mainFrame.settingsWidgets, customTitleLabel)
+
+        local customTitleHint = self.mainFrame.settingsCustomTitleHint
+        if not customTitleHint then
+            customTitleHint = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            self.mainFrame.settingsCustomTitleHint = customTitleHint
+        end
+        customTitleHint:ClearAllPoints()
+        customTitleHint:SetPoint("LEFT", customTitleLabel, "RIGHT", 8, 0)
+        customTitleHint:SetText("(Leave blank for default)")
+        customTitleHint:SetTextColor(unpack(COLORS.textFaint))
+        customTitleHint:Show()
+        table.insert(self.mainFrame.settingsWidgets, customTitleHint)
+
+        yOffset = yOffset - 20
+
+        local customTitleInput = self.mainFrame.settingsCustomTitleInput
+        if not customTitleInput then
+            customTitleInput = CreateFrame("EditBox", "PrimalLedgerCustomTitleInput", content, "BackdropTemplate")
+            customTitleInput:SetSize(200, 20)
+            customTitleInput:SetFontObject(GameFontNormalSmall)
+            customTitleInput:SetTextColor(unpack(COLORS.textNormal))
+            customTitleInput:SetAutoFocus(false)
+            customTitleInput:SetBackdrop({
+                bgFile = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 1,
+                insets = { left = 4, right = 4, top = 2, bottom = 2 }
+            })
+            customTitleInput:SetBackdropColor(0.05, 0.03, 0.02, 1)
+            customTitleInput:SetBackdropBorderColor(unpack(COLORS.border))
+            customTitleInput:SetTextInsets(4, 4, 0, 0)
+            self.mainFrame.settingsCustomTitleInput = customTitleInput
+
+            customTitleInput:SetScript("OnEnterPressed", function(self)
+                PL.db.settings.customTrackerTitle = self:GetText()
+                self:ClearFocus()
+                PL:UpdateTrackerWindow()
+            end)
+            customTitleInput:SetScript("OnEscapePressed", function(self)
+                self:SetText(PL.db.settings.customTrackerTitle or "")
+                self:ClearFocus()
+            end)
+        end
+        customTitleInput:ClearAllPoints()
+        customTitleInput:SetPoint("TOPLEFT", content, "TOPLEFT", 0, yOffset)
+        customTitleInput:SetText(self.db.settings.customTrackerTitle or "")
+        customTitleInput:Show()
+        table.insert(self.mainFrame.settingsWidgets, customTitleInput)
 
         yOffset = yOffset - 34
 
@@ -1300,7 +1313,7 @@ function PL:UpdateMainFrame()
         if not opacitySlider then
             opacitySlider = CreateFrame("Slider", "PrimalLedgerOpacitySlider", content, "OptionsSliderTemplate")
             opacitySlider:SetSize(180, 16)
-            opacitySlider:SetMinMaxValues(10, 100)
+            opacitySlider:SetMinMaxValues(0, 100)
             opacitySlider:SetValueStep(5)
             opacitySlider:SetObeyStepOnDrag(true)
             self.mainFrame.settingsOpacitySlider = opacitySlider
@@ -1340,7 +1353,7 @@ function PL:UpdateMainFrame()
         table.insert(self.mainFrame.settingsWidgets, scaleLabel)
 
         local currentScale = self.db.settings.uiScale or 100
-        scaleLabel:SetText("UI scale: " .. currentScale .. "%")
+        scaleLabel:SetText("Tracker UI scale: " .. currentScale .. "%")
 
         yOffset = yOffset - 20
 
@@ -1366,7 +1379,7 @@ function PL:UpdateMainFrame()
         scaleSlider:SetScript("OnValueChanged", function(self, value)
             value = math.floor(value + 0.5)
             PL.db.settings.uiScale = value
-            scaleLabel:SetText("UI scale: " .. value .. "%")
+            scaleLabel:SetText("Tracker UI scale: " .. value .. "%")
             PL:ApplyUIScale()
         end)
         scaleSlider:Show()
@@ -1423,7 +1436,7 @@ function PL:UpdateMainFrame()
                 edgeSize = 1,
                 insets = { left = 1, right = 1, top = 1, bottom = 1 }
             })
-            trackingBtn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+            trackingBtn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
             trackingBtn:SetBackdropBorderColor(unpack(COLORS.border))
 
             local tBtnText = trackingBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1433,11 +1446,11 @@ function PL:UpdateMainFrame()
             trackingBtn.btnText = tBtnText
 
             trackingBtn:SetScript("OnEnter", function(self)
-                self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 0.9)
+                self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 1)
                 self.btnText:SetTextColor(unpack(COLORS.accentHover))
             end)
             trackingBtn:SetScript("OnLeave", function(self)
-                self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+                self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
                 self.btnText:SetTextColor(unpack(COLORS.textNormal))
             end)
             self.mainFrame.settingsTrackingBtn = trackingBtn
@@ -1506,6 +1519,20 @@ function PL:UpdateMainFrame()
     if selectedTab <= 3 then
         content:SetHeight(rowIndex * ROW_HEIGHT + 10)
     end
+
+    -- Auto-size frame height to fit content (if user hasn't manually resized)
+    if not self.db.settings.frameSize then
+        local contentHeight = content:GetHeight()
+        local scrollFrame = self.mainFrame.scrollFrame
+        local frameTop = self.mainFrame:GetTop()
+        local scrollTop = scrollFrame:GetTop()
+        if frameTop and scrollTop then
+            local headerHeight = frameTop - scrollTop
+            local bottomPad = PADDING + 16
+            local neededHeight = headerHeight + contentHeight + bottomPad
+            self.mainFrame:SetHeight(math.max(MIN_HEIGHT, neededHeight))
+        end
+    end
 end
 
 -- Toggle main frame visibility
@@ -1562,8 +1589,8 @@ function PL:CreateTrackerWindow()
         insets = { left = 1, right = 1, top = 1, bottom = 1 }
     })
     local trackerAlpha = self:GetTrackerAlpha()
-    frame:SetBackdropColor(0.08, 0.05, 0.03, 0.70 * trackerAlpha)
-    frame:SetBackdropBorderColor(0.35, 0.22, 0.10, 0.70 * trackerAlpha)
+    frame:SetBackdropColor(0.08, 0.05, 0.03, trackerAlpha)
+    frame:SetBackdropBorderColor(0.35, 0.22, 0.10, trackerAlpha)
 
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1603,7 +1630,7 @@ function PL:CreateTrackerWindow()
         edgeSize = 1,
         insets = { left = 1, right = 1, top = 1, bottom = 1 }
     })
-    lockBtn:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 0.9)
+    lockBtn:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 1)
     lockBtn:SetBackdropBorderColor(unpack(COLORS.border))
 
     local lockIcon = lockBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -1764,6 +1791,54 @@ function PL:UpdateTrackerWindow()
         end
     end
 
+    -- Group shared alchemy transmute cooldowns
+    if self.db.settings.groupSharedCooldowns then
+        local groupTypes = {
+            primalMight = true,
+            transmuteEarthstormDiamond = true,
+            transmuteSkyfireDiamond = true,
+            transmutePrimalManaToFire = true,
+            transmutePrimalShadowToWater = true,
+            transmutePrimalAirToFire = true,
+            transmutePrimalWaterToShadow = true,
+            transmutePrimalEarthToWater = true,
+            transmutePrimalWaterToAir = true,
+            transmutePrimalLifeToEarth = true,
+        }
+        local grouped = {}
+        local charGrouped = {} -- charKey -> grouped entry
+        for _, entry in ipairs(entries) do
+            if groupTypes[entry.cdType] then
+                local existing = charGrouped[entry.charKey]
+                if existing then
+                    -- Use the longest remaining cooldown for the group
+                    if entry.remaining == nil then
+                        -- keep existing
+                    elseif existing.remaining == nil then
+                        existing.remaining = entry.remaining
+                    elseif entry.remaining > existing.remaining then
+                        existing.remaining = entry.remaining
+                    end
+                else
+                    local g = {
+                        charKey = entry.charKey,
+                        charName = entry.charName,
+                        charClass = entry.charClass,
+                        craftName = "Transmutes",
+                        remaining = entry.remaining,
+                        cdType = entry.cdType,
+                        isGroup = true,
+                    }
+                    charGrouped[entry.charKey] = g
+                    table.insert(grouped, g)
+                end
+            else
+                table.insert(grouped, entry)
+            end
+        end
+        entries = grouped
+    end
+
     if #entries == 0 then
         if not self.db.settings.trackerSize then
             frame:SetSize(160, PAD * 2 + 14 + 16)
@@ -1875,17 +1950,33 @@ function PL:UpdateTrackerWindow()
         return sep
     end
 
-    local yOffset = -(PAD + 16)
+    -- Update tracker title visibility and text
+    local showTitle = self.db.settings.showTrackerTitle ~= false
+    if showTitle then
+        local customTitle = self.db.settings.customTrackerTitle or ""
+        if customTitle == "" then
+            frame.title:SetText("Primal Ledger Cooldown Tracker")
+        else
+            frame.title:SetText(customTitle)
+        end
+        frame.title:Show()
+    else
+        frame.title:Hide()
+    end
 
-    -- Top bold separator (header line)
-    local topSep = GetSeparator()
-    topSep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
-    topSep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
-    topSep:SetHeight(1)
-    topSep:SetColorTexture(unpack(COLORS.separator))
-    topSep:SetAlpha(1)
-    topSep:Show()
-    yOffset = yOffset - 4
+    local yOffset = showTitle and -(PAD + 16) or -PAD
+
+    -- Top bold separator (header line) - only show when title is visible
+    if showTitle then
+        local topSep = GetSeparator()
+        topSep:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, yOffset)
+        topSep:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD, yOffset)
+        topSep:SetHeight(1)
+        topSep:SetColorTexture(unpack(COLORS.separator))
+        topSep:SetAlpha(1)
+        topSep:Show()
+        yOffset = yOffset - 4
+    end
 
     -- Draw rows with separators
     for i, entry in ipairs(entries) do
@@ -2174,7 +2265,7 @@ local function CreateProfFrameExportButton(parent, globalName, onClick)
         edgeSize = 1,
         insets = { left = 1, right = 1, top = 1, bottom = 1 }
     })
-    btn:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 0.9)
+    btn:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 1)
     btn:SetBackdropBorderColor(unpack(COLORS.border))
 
     local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2183,11 +2274,11 @@ local function CreateProfFrameExportButton(parent, globalName, onClick)
     btnText:SetTextColor(unpack(COLORS.textNormal))
 
     btn:SetScript("OnEnter", function(self)
-        self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+        self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
         btnText:SetTextColor(unpack(COLORS.accentHover))
     end)
     btn:SetScript("OnLeave", function(self)
-        self:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 0.9)
+        self:SetBackdropColor(COLORS.bg[1], COLORS.bg[2], COLORS.bg[3], 1)
         btnText:SetTextColor(unpack(COLORS.textNormal))
     end)
     btn:SetScript("OnClick", onClick)
@@ -2361,7 +2452,7 @@ function PL:ShowExportSelectionWindow(source)
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-        sel300Btn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+        sel300Btn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
         sel300Btn:SetBackdropBorderColor(unpack(COLORS.border))
 
         local sel300Text = sel300Btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2370,11 +2461,11 @@ function PL:ShowExportSelectionWindow(source)
         sel300Text:SetTextColor(unpack(COLORS.textNormal))
 
         sel300Btn:SetScript("OnEnter", function(self)
-            self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 0.9)
+            self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 1)
             sel300Text:SetTextColor(unpack(COLORS.accentHover))
         end)
         sel300Btn:SetScript("OnLeave", function(self)
-            self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+            self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
             sel300Text:SetTextColor(unpack(COLORS.textNormal))
         end)
         sel300Btn:SetScript("OnClick", function()
@@ -2394,7 +2485,7 @@ function PL:ShowExportSelectionWindow(source)
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-        exportBtn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+        exportBtn:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
         exportBtn:SetBackdropBorderColor(unpack(COLORS.border))
 
         local eBtnText = exportBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2403,11 +2494,11 @@ function PL:ShowExportSelectionWindow(source)
         eBtnText:SetTextColor(unpack(COLORS.textNormal))
 
         exportBtn:SetScript("OnEnter", function(self)
-            self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 0.9)
+            self:SetBackdropColor(COLORS.separator[1], COLORS.separator[2], COLORS.separator[3], 1)
             eBtnText:SetTextColor(unpack(COLORS.accentHover))
         end)
         exportBtn:SetScript("OnLeave", function(self)
-            self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 0.9)
+            self:SetBackdropColor(COLORS.tabSelectedBg[1], COLORS.tabSelectedBg[2], COLORS.tabSelectedBg[3], 1)
             eBtnText:SetTextColor(unpack(COLORS.textNormal))
         end)
         exportBtn:SetScript("OnClick", function()

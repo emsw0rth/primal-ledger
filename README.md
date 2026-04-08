@@ -9,9 +9,11 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, Leathe
 - **Minimap button** - Click to toggle the cooldown window
 - **ESC to close** - Press Escape to close the window
 - **Click to craft** - Left-click "Ready!" to open profession window and select the recipe, right-click to just open the profession window — works in both the main window and the tracker
-- **UI scale** - Adjustable scale slider (50%-200%) that uniformly scales all Primal Ledger windows
-- **Cooldown tracker window** - Semi-transparent overlay with live countdowns, profession icons, draggable and resizable with saved position/size
-- **Tracker transparency** - Adjustable opacity slider for the tracker window (background only, text stays readable)
+- **Tracker UI scale** - Adjustable scale slider (50%-200%) for the tracker window
+- **Cooldown tracker window** - Overlay with live countdowns, profession icons, draggable and resizable with saved position/size
+- **Tracker transparency** - Adjustable opacity slider (0%-100%) for the tracker window background (text stays readable)
+- **Custom tracker title** - Set a custom title or hide it entirely
+- **Group shared cooldowns** - Optionally group all alchemy transmutes into a single "Transmutes" row per character in the tracker
 - **Lock/Unlock tracker** - Hover to reveal a lock button; locked tracker hides the close button, resize grip, and prevents dragging
 - **Tracker visibility options** - Reliably toggle visibility in combat and in party/raid
 - **Current character first** - Your logged-in character always appears at the top of the list
@@ -82,7 +84,7 @@ A World of Warcraft TBC Anniversary addon that tracks Alchemy, Tailoring, Leathe
   - **Shift-click** item links to paste them in chat
   - **Click vendor name** to target the NPC
   - **Click TomTom** to set a waypoint (requires TomTom addon)
-- **Settings tab**: Toggle tracker window, show seconds, adjust transparency, UI scale, configure visibility options, reset all tracked data, open CD Tracking
+- **Settings tab**: Toggle tracker window, show seconds, group shared cooldowns, custom tracker title, adjust transparency, tracker UI scale, configure visibility options, reset all tracked data, open CD Tracking
 - **CD Tracking**: Click "CD Tracking" in Settings to open a window where you can enable/disable individual cooldown crafts
 - **Export crafts**: Open any profession window, click **Export**, select which crafts to include, then export as Discord-formatted text
 

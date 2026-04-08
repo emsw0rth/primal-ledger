@@ -18,6 +18,9 @@ local defaults = {
         trackerShowInGroup = true,
         uiScale = 100,
         disabledCooldowns = {},
+        groupSharedCooldowns = false,
+        showTrackerTitle = true,
+        customTrackerTitle = "",
     }
 }
 
